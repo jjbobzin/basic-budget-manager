@@ -1,0 +1,457 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
+const path = require('path');
+const { setupDatabase, db } = require('./database');
+
+const app = express();
+
+// Get port from environment variable or command line argument or default to 54321
+const PORT = process.env.PORT || process.argv[2] || 54321;
+
+// Middleware
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'budget-manager-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // Set to true if using HTTPS
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+// Initialize database
+setupDatabase();
+
+// Authentication middleware
+const requireAuth = (req, res, next) => {
+    if (req.session && req.session.userId) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+};
+
+// ==================== AUTH ENDPOINTS ====================
+
+// Check if setup is needed
+app.get('/api/setup/status', (req, res) => {
+    try {
+        const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+        const settings = db.prepare('SELECT setup_completed FROM settings WHERE id = 1').get();
+        
+        res.json({
+            needsSetup: userCount.count === 0,
+            setupCompleted: settings ? settings.setup_completed === 1 : false
+        });
+    } catch (error) {
+        console.error('Setup status error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Initial setup (creates first user and settings)
+app.post('/api/setup/initialize', async (req, res) => {
+    try {
+        const { username, password, settings, bills } = req.body;
+
+        // Check if any users exist
+        const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+        if (userCount.count > 0) {
+            return res.status(400).json({ error: 'Setup already completed' });
+        }
+
+        // Hash password
+        const password_hash = await bcrypt.hash(password, 10);
+
+        // Insert user
+        const insertUser = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
+        const userResult = insertUser.run(username, password_hash);
+
+        // Update settings
+        const updateSettings = db.prepare(`
+            UPDATE settings SET
+                income_per_paycheck = ?,
+                payroll_day_1 = ?,
+                payroll_day_2 = ?,
+                bills_account_name = ?,
+                bills_account_deposit = ?,
+                personal_account_name = ?,
+                personal_account_deposit = ?,
+                savings_account_1_name = ?,
+                savings_account_1_deposit = ?,
+                savings_account_2_name = ?,
+                starting_balance = ?,
+                setup_completed = 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        `);
+
+        updateSettings.run(
+            settings.income_per_paycheck,
+            settings.payroll_day_1,
+            settings.payroll_day_2,
+            settings.bills_account_name,
+            settings.bills_account_deposit,
+            settings.personal_account_name,
+            settings.personal_account_deposit,
+            settings.savings_account_1_name,
+            settings.savings_account_1_deposit,
+            settings.savings_account_2_name,
+            settings.starting_balance
+        );
+
+        // Insert bills if provided
+        if (bills && bills.length > 0) {
+            const insertBill = db.prepare(`
+                INSERT INTO bills (name, base_amount, due_day, frequency, notes)
+                VALUES (?, ?, ?, ?, ?)
+            `);
+
+            bills.forEach(bill => {
+                insertBill.run(
+                    bill.name,
+                    bill.base_amount,
+                    bill.due_day,
+                    bill.frequency,
+                    bill.notes || ''
+                );
+            });
+        }
+
+        // Log the user in
+        req.session.userId = userResult.lastInsertRowid;
+        req.session.username = username;
+
+        res.json({ success: true, message: 'Setup completed successfully' });
+    } catch (error) {
+        console.error('Setup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password_hash);
+        
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        req.session.userId = user.id;
+        req.session.username = user.username;
+
+        res.json({ success: true, username: user.username });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).json({ error: 'Could not log out' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// Check auth status
+app.get('/api/auth/status', (req, res) => {
+    if (req.session && req.session.userId) {
+        res.json({ authenticated: true, username: req.session.username });
+    } else {
+        res.json({ authenticated: false });
+    }
+});
+
+// Change password
+app.post('/api/auth/change-password', requireAuth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+        
+        const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newPasswordHash, req.session.userId);
+
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== PROTECTED API ENDPOINTS ====================
+
+// Get settings
+app.get('/api/settings', requireAuth, (req, res) => {
+    try {
+        const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        res.json(settings || {});
+    } catch (error) {
+        console.error('Get settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update settings
+app.put('/api/settings', requireAuth, (req, res) => {
+    try {
+        const {
+            income_per_paycheck,
+            payroll_day_1,
+            payroll_day_2,
+            bills_account_name,
+            bills_account_deposit,
+            personal_account_name,
+            personal_account_deposit,
+            savings_account_1_name,
+            savings_account_1_deposit,
+            savings_account_2_name,
+            starting_balance
+        } = req.body;
+
+        const stmt = db.prepare(`
+            UPDATE settings SET
+                income_per_paycheck = ?,
+                payroll_day_1 = ?,
+                payroll_day_2 = ?,
+                bills_account_name = ?,
+                bills_account_deposit = ?,
+                personal_account_name = ?,
+                personal_account_deposit = ?,
+                savings_account_1_name = ?,
+                savings_account_1_deposit = ?,
+                savings_account_2_name = ?,
+                starting_balance = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        `);
+
+        stmt.run(
+            income_per_paycheck,
+            payroll_day_1,
+            payroll_day_2,
+            bills_account_name,
+            bills_account_deposit,
+            personal_account_name,
+            personal_account_deposit,
+            savings_account_1_name,
+            savings_account_1_deposit,
+            savings_account_2_name,
+            starting_balance
+        );
+
+        const updated = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        res.json(updated);
+    } catch (error) {
+        console.error('Update settings error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get all bills
+app.get('/api/bills', requireAuth, (req, res) => {
+    try {
+        const bills = db.prepare('SELECT * FROM bills ORDER BY due_day, name').all();
+        res.json(bills);
+    } catch (error) {
+        console.error('Get bills error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create bill
+app.post('/api/bills', requireAuth, (req, res) => {
+    try {
+        const { name, base_amount, due_day, frequency, notes } = req.body;
+        
+        const stmt = db.prepare(`
+            INSERT INTO bills (name, base_amount, due_day, frequency, notes)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        
+        const result = stmt.run(name, base_amount, due_day, frequency, notes || '');
+        const newBill = db.prepare('SELECT * FROM bills WHERE id = ?').get(result.lastInsertRowid);
+        
+        res.json(newBill);
+    } catch (error) {
+        console.error('Create bill error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update bill
+app.put('/api/bills/:id', requireAuth, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, base_amount, due_day, frequency, notes } = req.body;
+        
+        const stmt = db.prepare(`
+            UPDATE bills SET
+                name = ?,
+                base_amount = ?,
+                due_day = ?,
+                frequency = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        
+        stmt.run(name, base_amount, due_day, frequency, notes || '', id);
+        const updated = db.prepare('SELECT * FROM bills WHERE id = ?').get(id);
+        
+        res.json(updated);
+    } catch (error) {
+        console.error('Update bill error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete bill
+app.delete('/api/bills/:id', requireAuth, (req, res) => {
+    try {
+        const { id } = req.params;
+        db.prepare('DELETE FROM bills WHERE id = ?').run(id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete bill error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get overrides
+app.get('/api/overrides', requireAuth, (req, res) => {
+    try {
+        const overrides = db.prepare('SELECT * FROM overrides').all();
+        res.json(overrides);
+    } catch (error) {
+        console.error('Get overrides error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Set override
+app.post('/api/overrides', requireAuth, (req, res) => {
+    try {
+        const { bill_id, year, month, amount } = req.body;
+        
+        const stmt = db.prepare(`
+            INSERT INTO overrides (bill_id, year, month, amount)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(bill_id, year, month) DO UPDATE SET amount = excluded.amount
+        `);
+        
+        stmt.run(bill_id, year, month, amount);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Set override error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete override
+app.delete('/api/overrides/:bill_id/:year/:month', requireAuth, (req, res) => {
+    try {
+        const { bill_id, year, month } = req.params;
+        db.prepare('DELETE FROM overrides WHERE bill_id = ? AND year = ? AND month = ?').run(bill_id, year, month);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete override error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get cleared transactions
+app.get('/api/cleared', requireAuth, (req, res) => {
+    try {
+        const cleared = db.prepare('SELECT * FROM cleared_transactions').all();
+        res.json(cleared);
+    } catch (error) {
+        console.error('Get cleared error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Toggle cleared status
+app.post('/api/cleared/toggle', requireAuth, (req, res) => {
+    try {
+        const { transaction_key } = req.body;
+        
+        const existing = db.prepare('SELECT * FROM cleared_transactions WHERE transaction_key = ?').get(transaction_key);
+        
+        if (existing) {
+            db.prepare('DELETE FROM cleared_transactions WHERE transaction_key = ?').run(transaction_key);
+            res.json({ cleared: false });
+        } else {
+            db.prepare('INSERT INTO cleared_transactions (transaction_key) VALUES (?)').run(transaction_key);
+            res.json({ cleared: true });
+        }
+    } catch (error) {
+        console.error('Toggle cleared error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Export all data
+app.get('/api/export', requireAuth, (req, res) => {
+    try {
+        const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        const bills = db.prepare('SELECT * FROM bills').all();
+        const overrides = db.prepare('SELECT * FROM overrides').all();
+        const cleared = db.prepare('SELECT * FROM cleared_transactions').all();
+
+        res.json({
+            exported_at: new Date().toISOString(),
+            settings,
+            bills,
+            overrides,
+            cleared_transactions: cleared
+        });
+    } catch (error) {
+        console.error('Export error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Serve static files (the frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Handle SPA routing - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`✓ Budget Manager Server running on port ${PORT}`);
+    console.log(`✓ Access at: http://localhost:${PORT}`);
+});

@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Manager</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab:hover {
+            background: #f0f0f0;
+        }
+
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .stat-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.success {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.danger {
+            border-left-color: #ef4444;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert.danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .running-balance-table td.balance {
+            font-weight: 600;
+        }
+
+        .running-balance-table td.balance.high {
+            color: #10b981;
+        }
+
+        .running-balance-table td.balance.medium {
+            color: #f59e0b;
+        }
+
+        .running-balance-table td.balance.low {
+            color: #ef4444;
+        }
+
+        .transaction-row {
+            cursor: pointer;
+        }
+
+        .transaction-row:hover td {
+            background: #eff6ff;
+        }
+
+        .month-header {
+            background: #1f2937 !important;
+            color: white !important;
+            font-weight: 700;
+        }
+
+        .override-indicator {
+            display: inline-block;
+            margin-left: 5px;
+            padding: 2px 6px;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .amount-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notes {
+            font-size: 12px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .two-col, .three-col {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .app {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // API base URL
+        const API_URL = '';
+
+        // Utility functions
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        };
+
+        const getLastDayOfMonth = (year, month) => {
+            return new Date(year, month + 1, 0).getDate();
+        };
+
+        const getMonthName = (month) => {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[month];
+        };
+
+        const getFrequencyMonths = (frequency) => {
+            switch(frequency) {
+                case 'monthly':
+                    return [0,1,2,3,4,5,6,7,8,9,10,11];
+                case 'quarterly':
+                    return [1, 4, 7, 10]; // Feb, May, Aug, Nov
+                case 'semi-annual':
+                    return [2, 8]; // Mar, Sep
+                case 'annual':
+                    return [7]; // Aug
+                default:
+                    return [0,1,2,3,4,5,6,7,8,9,10,11];
+            }
+        };
+
+        const calculateMonthlyReserve = (amount, frequency) => {
+            switch(frequency) {
+                case 'monthly':
+                    return amount;
+                case 'quarterly':
+                    return amount / 3;
+                case 'semi-annual':
+                    return amount / 6;
+                case 'annual':
+                    return amount / 12;
+                default:
+                    return amount;
+            }
+        };
+
+        const getTransactionKey = (billId, year, month, day, isPayroll = false) => {
+            const type = isPayroll ? 'payroll' : 'bill';
+            return `${type}-${billId || 'pay'}-${year}-${month.toString().padStart(2, '0')}-${day}`;
+        };
+
+        const isTransactionInPast = (year, month, day, bufferDays = 4) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const transactionDate = new Date(year, month, day);
+            transactionDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = today - transactionDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays > bufferDays;
+        };
+
+        // Main App Component
+        function BudgetApp() {
+            const [activeTab, setActiveTab] = useState('allocation');
+            const [settings, setSettings] = useState(null);
+            const [bills, setBills] = useState([]);
+            const [overrides, setOverrides] = useState([]);
+            const [clearedTransactions, setClearedTransactions] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [editingBill, setEditingBill] = useState(null);
+            const [showAddBill, setShowAddBill] = useState(false);
+            const [overrideModal, setOverrideModal] = useState(null);
+            const [showSettings, setShowSettings] = useState(false);
+
+            // Fetch all data
+            const fetchData = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const [settingsRes, billsRes, overridesRes, clearedRes] = await Promise.all([
+                        fetch(`${API_URL}/api/settings`),
+                        fetch(`${API_URL}/api/bills`),
+                        fetch(`${API_URL}/api/overrides`),
+                        fetch(`${API_URL}/api/cleared`)
+                    ]);
+
+                    if (!settingsRes.ok || !billsRes.ok || !overridesRes.ok || !clearedRes.ok) {
+                        throw new Error('Failed to fetch data');
+                    }
+
+                    const [settingsData, billsData, overridesData, clearedData] = await Promise.all([
+                        settingsRes.json(),
+                        billsRes.json(),
+                        overridesRes.json(),
+                        clearedRes.json()
+                    ]);
+
+                    setSettings(settingsData);
+                    setBills(billsData);
+                    setOverrides(overridesData);
+                    setClearedTransactions(clearedData);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                fetchData();
+            }, []);
+
+            const updateSettings = async (updates) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/settings`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...settings, ...updates })
+                    });
+                    if (!res.ok) throw new Error('Failed to update settings');
+                    const updated = await res.json();
+                    setSettings(updated);
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const addBill = async (bill) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/bills`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bill)
+                    });
+                    if (!res.ok) throw new Error('Failed to add bill');
+                    const newBill = await res.json();
+                    setBills([...bills, newBill]);
+                    setShowAddBill(false);
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const updateBill = async (id, updates) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/bills/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updates)
+                    });
+                    if (!res.ok) throw new Error('Failed to update bill');
+                    const updated = await res.json();
+                    setBills(bills.map(b => b.id === id ? updated : b));
+                    setEditingBill(null);
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const deleteBill = async (id) => {
+                if (!confirm('Are you sure you want to delete this bill?')) return;
+                try {
+                    const res = await fetch(`${API_URL}/api/bills/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!res.ok) throw new Error('Failed to delete bill');
+                    setBills(bills.filter(b => b.id !== id));
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const setOverride = async (billId, year, month, amount) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/overrides`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bill_id: billId, year, month, amount })
+                    });
+                    if (!res.ok) throw new Error('Failed to set override');
+                    await fetchData(); // Refresh all data
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const clearOverride = async (billId, year, month) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/overrides/${billId}/${year}/${month}`, {
+                        method: 'DELETE'
+                    });
+                    if (!res.ok) throw new Error('Failed to clear override');
+                    await fetchData(); // Refresh all data
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const clearTransaction = async (transactionKey) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/cleared`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ transaction_key: transactionKey })
+                    });
+                    if (!res.ok) throw new Error('Failed to clear transaction');
+                    setClearedTransactions([...clearedTransactions, transactionKey]);
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const unclearTransaction = async (transactionKey) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/cleared/${encodeURIComponent(transactionKey)}`, {
+                        method: 'DELETE'
+                    });
+                    if (!res.ok) throw new Error('Failed to unclear transaction');
+                    setClearedTransactions(clearedTransactions.filter(t => t !== transactionKey));
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const exportData = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/export`);
+                    if (!res.ok) throw new Error('Failed to export data');
+                    const data = await res.json();
+                    const dataStr = JSON.stringify(data, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `budget-export-${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const resetData = async () => {
+                if (!confirm('Are you sure you want to reset all data to new random values? This cannot be undone.')) return;
+                try {
+                    const res = await fetch(`${API_URL}/api/reset`, { method: 'POST' });
+                    if (!res.ok) throw new Error('Failed to reset data');
+                    await fetchData();
+                    alert('Data reset successfully!');
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="app">
+                        <div className="loading">
+                            <h2>Loading...</h2>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="app">
+                        <div className="error">
+                            <h3>Error</h3>
+                            <p>{error}</p>
+                            <button className="btn btn-primary" onClick={fetchData}>Retry</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="app">
+                    <div className="header">
+                        <h1>💰 Budget Manager</h1>
+                        <p style={{color: '#6b7280', fontSize: '14px', marginBottom: '15px'}}>
+                            <strong>Data Storage:</strong> All your data is stored in a SQLite database on the server. 
+                            It persists across all browsers and devices on your network.
+                        </p>
+                        <div className="button-group">
+                            <button className="btn btn-secondary btn-small" onClick={() => setShowSettings(true)}>
+                                ⚙️ Settings
+                            </button>
+                            <button className="btn btn-primary btn-small" onClick={exportData}>
+                                Export Data
+                            </button>
+                            <button className="btn btn-danger btn-small" onClick={resetData}>
+                                Reset to Random
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="tabs">
+                        <button 
+                            className={`tab ${activeTab === 'allocation' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('allocation')}
+                        >
+                            Budget Allocation
+                        </button>
+                        <button 
+                            className={`tab ${activeTab === 'balance' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('balance')}
+                        >
+                            Running Balance
+                        </button>
+                    </div>
+
+                    {activeTab === 'allocation' && (
+                        <AllocationView 
+                            settings={settings}
+                            bills={bills}
+                            updateSettings={updateSettings}
+                            addBill={addBill}
+                            updateBill={updateBill}
+                            deleteBill={deleteBill}
+                            editingBill={editingBill}
+                            setEditingBill={setEditingBill}
+                            showAddBill={showAddBill}
+                            setShowAddBill={setShowAddBill}
+                        />
+                    )}
+
+                    {activeTab === 'balance' && (
+                        <RunningBalanceView 
+                            settings={settings}
+                            bills={bills}
+                            overrides={overrides}
+                            clearedTransactions={clearedTransactions}
+                            updateSettings={updateSettings}
+                            setOverride={setOverride}
+                            clearOverride={clearOverride}
+                            clearTransaction={clearTransaction}
+                            unclearTransaction={unclearTransaction}
+                            overrideModal={overrideModal}
+                            setOverrideModal={setOverrideModal}
+                        />
+                    )}
+
+                    {showSettings && (
+                        <SettingsModal
+                            settings={settings}
+                            updateSettings={updateSettings}
+                            onClose={() => setShowSettings(false)}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // Settings Modal Component
+        function SettingsModal({ settings, updateSettings, onClose }) {
+            const [formData, setFormData] = useState({...settings});
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                await updateSettings(formData);
+                onClose();
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Account Settings</h3>
+                        <form onSubmit={handleSubmit}>
+                            <div className="section">
+                                <h4 style={{marginBottom: '10px'}}>Account Names</h4>
+                                <div className="input-group">
+                                    <label>Bills Account Name</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.bills_account_name}
+                                        onChange={(e) => setFormData({...formData, bills_account_name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Personal Account Name</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.personal_account_name}
+                                        onChange={(e) => setFormData({...formData, personal_account_name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Savings Account 1 Name</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.savings_account_1_name}
+                                        onChange={(e) => setFormData({...formData, savings_account_1_name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Savings Account 2 Name</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.savings_account_2_name}
+                                        onChange={(e) => setFormData({...formData, savings_account_2_name: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="button-group">
+                                <button type="submit" className="btn btn-primary">
+                                    Save Settings
+                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Allocation View Component
+        function AllocationView({ 
+            settings,
+            bills,
+            updateSettings, 
+            addBill, 
+            updateBill, 
+            deleteBill,
+            editingBill,
+            setEditingBill,
+            showAddBill,
+            setShowAddBill
+        }) {
+            const calculations = useMemo(() => {
+                const monthlyIncome = settings.income_per_paycheck * 2;
+                
+                const totalMonthlyObligation = bills.reduce((sum, bill) => {
+                    return sum + calculateMonthlyReserve(bill.base_amount, bill.frequency);
+                }, 0);
+
+                const billsPerPaycheck = totalMonthlyObligation / 2;
+                const fixedDeposit = settings.bills_account_deposit * 2;
+                const surplus = fixedDeposit - totalMonthlyObligation;
+                const deficit = totalMonthlyObligation - fixedDeposit;
+                
+                const remainingPerPaycheck = settings.income_per_paycheck - billsPerPaycheck;
+                const remainingMonthly = monthlyIncome - totalMonthlyObligation;
+
+                const totalDeposits = (settings.bills_account_deposit + settings.personal_account_deposit + settings.savings_account_1_deposit) * 2;
+                const savingsAccount2Monthly = monthlyIncome - totalDeposits;
+                const savingsAccount2PerPaycheck = savingsAccount2Monthly / 2;
+
+                const yearlySurplus = surplus * 12;
+
+                return {
+                    monthlyIncome,
+                    totalMonthlyObligation,
+                    billsPerPaycheck,
+                    fixedDeposit,
+                    surplus,
+                    deficit,
+                    isOk: fixedDeposit >= totalMonthlyObligation,
+                    remainingPerPaycheck,
+                    remainingMonthly,
+                    savingsAccount2Monthly,
+                    savingsAccount2PerPaycheck,
+                    yearlySurplus
+                };
+            }, [settings, bills]);
+
+            return (
+                <div className="content">
+                    <div className="section">
+                        <h2>Income & Payroll</h2>
+                        <div className="two-col">
+                            <div className="input-group">
+                                <label>Net Income per Paycheck</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={settings.income_per_paycheck}
+                                    onChange={(e) => updateSettings({ income_per_paycheck: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Monthly Income (Auto-calculated)</label>
+                                <input 
+                                    type="text" 
+                                    value={formatCurrency(calculations.monthlyIncome)}
+                                    disabled
+                                    style={{background: '#f3f4f6'}}
+                                />
+                            </div>
+                        </div>
+                        <div className="two-col">
+                            <div className="input-group">
+                                <label>First Payroll Day of Month</label>
+                                <input 
+                                    type="number" 
+                                    min="1"
+                                    max="31"
+                                    value={settings.payroll_day_1}
+                                    onChange={(e) => updateSettings({ payroll_day_1: parseInt(e.target.value) || 1 })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Second Payroll Day (31 = Last Day of Month)</label>
+                                <input 
+                                    type="number" 
+                                    min="1"
+                                    max="31"
+                                    value={settings.payroll_day_2}
+                                    onChange={(e) => updateSettings({ payroll_day_2: parseInt(e.target.value) || 31 })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="section">
+                        <h2>Account Deposits per Paycheck</h2>
+                        <p style={{color: '#6b7280', marginBottom: '15px', fontSize: '14px'}}>
+                            Click the Settings (⚙️) button at the top to customize account names.
+                        </p>
+                        <div className="two-col">
+                            <div className="input-group">
+                                <label>{settings.bills_account_name} (Fixed Amount)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={settings.bills_account_deposit}
+                                    onChange={(e) => updateSettings({ bills_account_deposit: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>{settings.personal_account_name}</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={settings.personal_account_deposit}
+                                    onChange={(e) => updateSettings({ personal_account_deposit: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                        </div>
+                        <div className="two-col">
+                            <div className="input-group">
+                                <label>{settings.savings_account_1_name}</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={settings.savings_account_1_deposit}
+                                    onChange={(e) => updateSettings({ savings_account_1_deposit: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>{settings.savings_account_2_name} (Remainder - Auto-calculated)</label>
+                                <input 
+                                    type="text" 
+                                    value={formatCurrency(calculations.savingsAccount2PerPaycheck)}
+                                    disabled
+                                    style={{background: '#f3f4f6'}}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {calculations.isOk ? (
+                        <div className="alert success">
+                            ✓ Deposit OK by ${Math.abs(calculations.surplus).toFixed(2)} per month 
+                            (${Math.abs(calculations.surplus / 2).toFixed(2)} per paycheck)
+                            <br/>
+                            Yearly surplus available: {formatCurrency(calculations.yearlySurplus)}
+                        </div>
+                    ) : (
+                        <div className="alert danger">
+                            ⚠ Need to increase deposits by ${Math.abs(calculations.deficit).toFixed(2)} per month 
+                            (${Math.abs(calculations.deficit / 2).toFixed(2)} per paycheck)
+                        </div>
+                    )}
+
+                    <div className="stats-grid">
+                        <div className={`stat-card ${calculations.isOk ? 'success' : 'danger'}`}>
+                            <div className="label">Total Monthly Bills Obligation</div>
+                            <div className="value">{formatCurrency(calculations.totalMonthlyObligation)}</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="label">Fixed Monthly Deposit</div>
+                            <div className="value">{formatCurrency(calculations.fixedDeposit)}</div>
+                        </div>
+                        <div className={`stat-card ${calculations.isOk ? 'success' : 'danger'}`}>
+                            <div className="label">{calculations.isOk ? 'Monthly Surplus' : 'Monthly Deficit'}</div>
+                            <div className="value">{formatCurrency(Math.abs(calculations.isOk ? calculations.surplus : calculations.deficit))}</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="label">{settings.savings_account_2_name} (Monthly)</div>
+                            <div className="value">{formatCurrency(calculations.savingsAccount2Monthly)}</div>
+                        </div>
+                    </div>
+
+                    <div className="section">
+                        <h2>Bills</h2>
+                        <p style={{color: '#6b7280', marginBottom: '15px', fontSize: '14px'}}>
+                            All bills are fully customizable. The app comes with random sample data.
+                        </p>
+                        <button className="btn btn-primary" onClick={() => setShowAddBill(true)}>
+                            + Add Bill
+                        </button>
+
+                        <div className="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Due Day</th>
+                                        <th>Bill Name</th>
+                                        <th>Amount</th>
+                                        <th>Frequency</th>
+                                        <th>Monthly Reserve</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bills
+                                        .sort((a, b) => a.due_day - b.due_day)
+                                        .map(bill => (
+                                        <tr key={bill.id}>
+                                            <td>{bill.due_day}</td>
+                                            <td><strong>{bill.name}</strong></td>
+                                            <td>{formatCurrency(bill.base_amount)}</td>
+                                            <td style={{textTransform: 'capitalize'}}>{bill.frequency}</td>
+                                            <td>{formatCurrency(calculateMonthlyReserve(bill.base_amount, bill.frequency))}</td>
+                                            <td className="notes">{bill.notes}</td>
+                                            <td>
+                                                <button 
+                                                    className="btn btn-secondary btn-small"
+                                                    onClick={() => setEditingBill(bill)}
+                                                    style={{marginRight: '5px'}}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    className="btn btn-danger btn-small"
+                                                    onClick={() => deleteBill(bill.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr style={{fontWeight: 'bold', background: '#f9fafb'}}>
+                                        <td colSpan="4">TOTAL MONTHLY OBLIGATION</td>
+                                        <td>{formatCurrency(calculations.totalMonthlyObligation)}</td>
+                                        <td colSpan="2"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {(showAddBill || editingBill) && (
+                        <BillModal 
+                            bill={editingBill}
+                            onSave={editingBill ? updateBill : addBill}
+                            onClose={() => {
+                                setShowAddBill(false);
+                                setEditingBill(null);
+                            }}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // Running Balance View Component
+        function RunningBalanceView({ 
+            settings,
+            bills,
+            overrides,
+            clearedTransactions,
+            updateSettings, 
+            setOverride, 
+            clearOverride,
+            clearTransaction,
+            unclearTransaction,
+            overrideModal,
+            setOverrideModal
+        }) {
+            const transactions = useMemo(() => {
+                const result = [];
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                const currentMonth = today.getMonth();
+                
+                let balance = settings.starting_balance;
+                
+                // Convert overrides array to lookup object
+                const overrideMap = {};
+                overrides.forEach(o => {
+                    const key = `${o.bill_id}-${o.year}-${o.month.toString().padStart(2, '0')}`;
+                    overrideMap[key] = o.amount;
+                });
+                
+                // Convert cleared transactions array to Set for fast lookup
+                const clearedSet = new Set(clearedTransactions);
+                
+                // Generate 12 months of transactions
+                for (let monthOffset = 0; monthOffset < 12; monthOffset++) {
+                    const year = currentYear + Math.floor((currentMonth + monthOffset) / 12);
+                    const month = (currentMonth + monthOffset) % 12;
+                    const monthName = getMonthName(month);
+                    const daysInMonth = getLastDayOfMonth(year, month);
+                    
+                    // Collect all transactions for this month
+                    const monthTransactions = [];
+                    
+                    // Add payroll transactions
+                    const payrollDay1 = Math.min(settings.payroll_day_1, daysInMonth);
+                    const payrollDay2 = settings.payroll_day_2 === 31 ? daysInMonth : Math.min(settings.payroll_day_2, daysInMonth);
+                    
+                    const payroll1Key = getTransactionKey(null, year, month, payrollDay1, true);
+                    const payroll1Cleared = clearedSet.has(payroll1Key);
+                    const payroll1InPast = isTransactionInPast(year, month, payrollDay1);
+                    
+                    if (!payroll1InPast || !payroll1Cleared) {
+                        monthTransactions.push({
+                            day: payrollDay1,
+                            name: 'Payroll',
+                            amount: settings.income_per_paycheck,
+                            isPayroll: true,
+                            type: 'transaction',
+                            transactionKey: payroll1Key,
+                            isCleared: payroll1Cleared,
+                            inPast: payroll1InPast
+                        });
+                    }
+                    
+                    if (payrollDay1 !== payrollDay2) {
+                        const payroll2Key = getTransactionKey(null, year, month, payrollDay2, true);
+                        const payroll2Cleared = clearedSet.has(payroll2Key);
+                        const payroll2InPast = isTransactionInPast(year, month, payrollDay2);
+                        
+                        if (!payroll2InPast || !payroll2Cleared) {
+                            monthTransactions.push({
+                                day: payrollDay2,
+                                name: 'Payroll',
+                                amount: settings.income_per_paycheck,
+                                isPayroll: true,
+                                type: 'transaction',
+                                transactionKey: payroll2Key,
+                                isCleared: payroll2Cleared,
+                                inPast: payroll2InPast
+                            });
+                        }
+                    }
+                    
+                    // Add bills for this month
+                    bills.forEach(bill => {
+                        const overrideKey = `${bill.id}-${year}-${month.toString().padStart(2, '0')}`;
+                        const hasOverride = overrideMap[overrideKey] !== undefined;
+                        const amount = hasOverride ? overrideMap[overrideKey] : bill.base_amount;
+                        
+                        const frequencyMonths = getFrequencyMonths(bill.frequency);
+                        const isPaymentMonth = frequencyMonths.includes(month);
+                        const dueDay = Math.min(bill.due_day, daysInMonth);
+                        
+                        const transKey = getTransactionKey(bill.id, year, month, dueDay, false);
+                        const isCleared = clearedSet.has(transKey);
+                        const inPast = isTransactionInPast(year, month, dueDay);
+                        
+                        if (!inPast || !isCleared) {
+                            if (bill.frequency === 'monthly') {
+                                monthTransactions.push({
+                                    day: dueDay,
+                                    name: bill.name,
+                                    amount: amount,
+                                    isPayroll: false,
+                                    type: 'transaction',
+                                    billId: bill.id,
+                                    hasOverride: hasOverride,
+                                    year: year,
+                                    month: month,
+                                    transactionKey: transKey,
+                                    isCleared: isCleared,
+                                    inPast: inPast
+                                });
+                            } else {
+                                const monthlyReserve = calculateMonthlyReserve(bill.base_amount, bill.frequency);
+                                
+                                if (isPaymentMonth) {
+                                    monthTransactions.push({
+                                        day: dueDay,
+                                        name: `${bill.name} (Payment)`,
+                                        amount: amount,
+                                        isPayroll: false,
+                                        type: 'transaction',
+                                        billId: bill.id,
+                                        hasOverride: hasOverride,
+                                        year: year,
+                                        month: month,
+                                        transactionKey: transKey,
+                                        isCleared: isCleared,
+                                        inPast: inPast
+                                    });
+                                } else {
+                                    monthTransactions.push({
+                                        day: dueDay,
+                                        name: `${bill.name} (Reserve)`,
+                                        amount: monthlyReserve,
+                                        isPayroll: false,
+                                        type: 'transaction',
+                                        billId: bill.id,
+                                        hasOverride: false,
+                                        year: year,
+                                        month: month,
+                                        isReserve: true,
+                                        transactionKey: transKey,
+                                        isCleared: isCleared,
+                                        inPast: inPast
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Sort transactions by day
+                    monthTransactions.sort((a, b) => a.day - b.day);
+                    
+                    // Calculate running balance for each transaction
+                    monthTransactions.forEach(trans => {
+                        if (trans.isPayroll) {
+                            balance += trans.amount;
+                        } else {
+                            balance -= trans.amount;
+                        }
+                        trans.balance = balance;
+                    });
+                    
+                    // Only add month header if there are transactions in this month
+                    if (monthTransactions.length > 0) {
+                        result.push({
+                            type: 'month-header',
+                            date: `${monthName} ${year}`,
+                            balance: balance
+                        });
+                        result.push(...monthTransactions);
+                    }
+                }
+                
+                return result;
+            }, [settings, bills, overrides, clearedTransactions]);
+
+            const getBalanceClass = (balance) => {
+                if (balance > 500) return 'high';
+                if (balance > 200) return 'medium';
+                return 'low';
+            };
+
+            const handleTransactionClick = (transaction) => {
+                if (transaction.type === 'transaction' && !transaction.isPayroll && transaction.billId) {
+                    setOverrideModal(transaction);
+                }
+            };
+
+            return (
+                <div className="content">
+                    <div className="section">
+                        <h2>Starting Balance</h2>
+                        <div className="input-group" style={{maxWidth: '300px'}}>
+                            <label>Current Balance in {settings.bills_account_name}</label>
+                            <input 
+                                type="number" 
+                                step="0.01"
+                                value={settings.starting_balance}
+                                onChange={(e) => updateSettings({ starting_balance: parseFloat(e.target.value) || 0 })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="section">
+                        <h2>12-Month Forecast</h2>
+                        <p style={{color: '#6b7280', marginBottom: '15px', fontSize: '14px'}}>
+                            <strong>Click bill name</strong> to set a one-time amount override for that month. 
+                            <strong>Click ✕</strong> to mark a transaction as cleared (removes from view). 
+                            Bills marked "(Reserve)" are setting aside money for future payments.<br/>
+                            <em>Transactions older than 4 days automatically hide once marked cleared.</em>
+                        </p>
+                        
+                        <div className="table-wrapper">
+                            <table className="running-balance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Transaction</th>
+                                        <th>Amount</th>
+                                        <th>Balance</th>
+                                        <th style={{width: '60px'}}>Clear</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {transactions.map((trans, idx) => {
+                                        if (trans.type === 'month-header') {
+                                            return (
+                                                <tr key={`header-${idx}`} className="month-header">
+                                                    <td colSpan="4">{trans.date}</td>
+                                                    <td className="balance">{formatCurrency(trans.balance)}</td>
+                                                </tr>
+                                            );
+                                        }
+                                        
+                                        const rowStyle = trans.isCleared ? {
+                                            opacity: 0.5,
+                                            textDecoration: 'line-through'
+                                        } : {};
+                                        
+                                        return (
+                                            <tr 
+                                                key={`trans-${idx}`}
+                                                className={trans.isPayroll ? '' : 'transaction-row'}
+                                                style={rowStyle}
+                                            >
+                                                <td>{trans.day}</td>
+                                                <td onClick={() => !trans.isPayroll && handleTransactionClick(trans)} style={trans.isPayroll ? {} : {cursor: 'pointer'}}>
+                                                    <div className="amount-cell">
+                                                        <span>{trans.name}</span>
+                                                        {trans.hasOverride && <span className="override-indicator">OVERRIDE</span>}
+                                                        {trans.isCleared && <span className="override-indicator" style={{background: '#d1fae5', color: '#065f46'}}>CLEARED</span>}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {trans.isPayroll ? '+' : '-'}{formatCurrency(trans.amount)}
+                                                </td>
+                                                <td className={`balance ${getBalanceClass(trans.balance)}`}>
+                                                    {formatCurrency(trans.balance)}
+                                                </td>
+                                                <td style={{textAlign: 'center'}}>
+                                                    {trans.transactionKey && (
+                                                        trans.isCleared ? (
+                                                            <button 
+                                                                className="btn btn-secondary btn-small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    unclearTransaction(trans.transactionKey);
+                                                                }}
+                                                                title="Mark as uncleared"
+                                                                style={{padding: '4px 8px', fontSize: '11px'}}
+                                                            >
+                                                                ↺
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                className="btn btn-danger btn-small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    clearTransaction(trans.transactionKey);
+                                                                }}
+                                                                title="Mark as cleared"
+                                                                style={{padding: '4px 8px', fontSize: '11px'}}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {overrideModal && (
+                        <OverrideModal 
+                            transaction={overrideModal}
+                            bills={bills}
+                            onSave={(billId, year, month, amount) => {
+                                setOverride(billId, year, month, amount);
+                                setOverrideModal(null);
+                            }}
+                            onClear={(billId, year, month) => {
+                                clearOverride(billId, year, month);
+                                setOverrideModal(null);
+                            }}
+                            onClose={() => setOverrideModal(null)}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // Override Modal Component
+        function OverrideModal({ transaction, bills, onSave, onClear, onClose }) {
+            const [amount, setAmount] = useState(transaction.amount);
+
+            const handleSave = () => {
+                onSave(transaction.billId, transaction.year, transaction.month, parseFloat(amount));
+            };
+
+            const handleClear = () => {
+                onClear(transaction.billId, transaction.year, transaction.month);
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Override Amount</h3>
+                        <p style={{marginBottom: '20px', color: '#6b7280'}}>
+                            {transaction.name} - {getMonthName(transaction.month)} {transaction.year}
+                        </p>
+                        <div className="input-group">
+                            <label>Amount for this month</label>
+                            <input 
+                                type="number"
+                                step="0.01"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={handleSave}>
+                                Set Override
+                            </button>
+                            {transaction.hasOverride && (
+                                <button className="btn btn-secondary" onClick={handleClear}>
+                                    Clear Override
+                                </button>
+                            )}
+                            <button className="btn btn-secondary" onClick={onClose}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Bill Modal Component
+        function BillModal({ bill, onSave, onClose }) {
+            const [formData, setFormData] = useState(
+                bill || { 
+                    name: '', 
+                    base_amount: '', 
+                    due_day: 1, 
+                    frequency: 'monthly', 
+                    notes: '' 
+                }
+            );
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const dataToSave = {
+                    ...formData,
+                    base_amount: parseFloat(formData.base_amount) || 0,
+                    due_day: parseInt(formData.due_day) || 1
+                };
+                if (bill) {
+                    onSave(bill.id, dataToSave);
+                } else {
+                    onSave(dataToSave);
+                }
+            };
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>{bill ? 'Edit Bill' : 'Add New Bill'}</h3>
+                        <form onSubmit={handleSubmit}>
+                            <div className="input-group">
+                                <label>Bill Name</label>
+                                <input 
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Amount</label>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.base_amount}
+                                    onChange={(e) => setFormData({...formData, base_amount: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Due Day (1-31)</label>
+                                <input 
+                                    type="number"
+                                    min="1"
+                                    max="31"
+                                    value={formData.due_day}
+                                    onChange={(e) => setFormData({...formData, due_day: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>Frequency</label>
+                                <select 
+                                    value={formData.frequency}
+                                    onChange={(e) => setFormData({...formData, frequency: e.target.value})}
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly (Feb, May, Aug, Nov)</option>
+                                    <option value="semi-annual">Semi-Annual (Mar, Sep)</option>
+                                    <option value="annual">Annual (August)</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label>Notes (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                />
+                            </div>
+                            <div className="button-group">
+                                <button type="submit" className="btn btn-primary">
+                                    {bill ? 'Update Bill' : 'Add Bill'}
+                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<BudgetApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>

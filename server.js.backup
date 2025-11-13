@@ -1,0 +1,383 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { setupDatabase, db } = require('./database');
+
+const app = express();
+
+// Get port from environment variable or command line argument or default to 54321
+const PORT = process.env.PORT || process.argv[2] || 54321;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Initialize database
+setupDatabase();
+
+// ============ API ENDPOINTS ============
+
+// Get settings
+app.get('/api/settings', (req, res) => {
+    try {
+        const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        if (!settings) {
+            return res.status(404).json({ error: 'Settings not found' });
+        }
+        res.json(settings);
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update settings
+app.put('/api/settings', (req, res) => {
+    try {
+        const {
+            income_per_paycheck,
+            payroll_day_1,
+            payroll_day_2,
+            bills_account_name,
+            bills_account_deposit,
+            personal_account_name,
+            personal_account_deposit,
+            savings_account_1_name,
+            savings_account_1_deposit,
+            savings_account_2_name,
+            starting_balance
+        } = req.body;
+
+        const stmt = db.prepare(`
+            UPDATE settings SET
+                income_per_paycheck = ?,
+                payroll_day_1 = ?,
+                payroll_day_2 = ?,
+                bills_account_name = ?,
+                bills_account_deposit = ?,
+                personal_account_name = ?,
+                personal_account_deposit = ?,
+                savings_account_1_name = ?,
+                savings_account_1_deposit = ?,
+                savings_account_2_name = ?,
+                starting_balance = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        `);
+
+        stmt.run(
+            income_per_paycheck,
+            payroll_day_1,
+            payroll_day_2,
+            bills_account_name,
+            bills_account_deposit,
+            personal_account_name,
+            personal_account_deposit,
+            savings_account_1_name,
+            savings_account_1_deposit,
+            savings_account_2_name,
+            starting_balance
+        );
+
+        const updated = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        res.json(updated);
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get all bills
+app.get('/api/bills', (req, res) => {
+    try {
+        const bills = db.prepare('SELECT * FROM bills ORDER BY due_day').all();
+        res.json(bills);
+    } catch (error) {
+        console.error('Error fetching bills:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create bill
+app.post('/api/bills', (req, res) => {
+    try {
+        const { name, base_amount, due_day, frequency, notes } = req.body;
+        
+        const stmt = db.prepare(`
+            INSERT INTO bills (name, base_amount, due_day, frequency, notes)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        
+        const result = stmt.run(name, base_amount, due_day, frequency, notes || '');
+        const newBill = db.prepare('SELECT * FROM bills WHERE id = ?').get(result.lastInsertRowid);
+        
+        res.status(201).json(newBill);
+    } catch (error) {
+        console.error('Error creating bill:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update bill
+app.put('/api/bills/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, base_amount, due_day, frequency, notes } = req.body;
+        
+        const stmt = db.prepare(`
+            UPDATE bills SET
+                name = ?,
+                base_amount = ?,
+                due_day = ?,
+                frequency = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+        
+        stmt.run(name, base_amount, due_day, frequency, notes || '', id);
+        const updated = db.prepare('SELECT * FROM bills WHERE id = ?').get(id);
+        
+        res.json(updated);
+    } catch (error) {
+        console.error('Error updating bill:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete bill
+app.delete('/api/bills/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        db.prepare('DELETE FROM bills WHERE id = ?').run(id);
+        res.json({ success: true, message: 'Bill deleted' });
+    } catch (error) {
+        console.error('Error deleting bill:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get all overrides
+app.get('/api/overrides', (req, res) => {
+    try {
+        const overrides = db.prepare('SELECT * FROM overrides').all();
+        res.json(overrides);
+    } catch (error) {
+        console.error('Error fetching overrides:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create or update override
+app.post('/api/overrides', (req, res) => {
+    try {
+        const { bill_id, year, month, amount } = req.body;
+        
+        const stmt = db.prepare(`
+            INSERT INTO overrides (bill_id, year, month, amount)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(bill_id, year, month) DO UPDATE SET amount = ?
+        `);
+        
+        stmt.run(bill_id, year, month, amount, amount);
+        
+        const override = db.prepare(
+            'SELECT * FROM overrides WHERE bill_id = ? AND year = ? AND month = ?'
+        ).get(bill_id, year, month);
+        
+        res.json(override);
+    } catch (error) {
+        console.error('Error creating override:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete override
+app.delete('/api/overrides/:bill_id/:year/:month', (req, res) => {
+    try {
+        const { bill_id, year, month } = req.params;
+        db.prepare('DELETE FROM overrides WHERE bill_id = ? AND year = ? AND month = ?')
+            .run(bill_id, year, month);
+        res.json({ success: true, message: 'Override deleted' });
+    } catch (error) {
+        console.error('Error deleting override:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get all cleared transactions
+app.get('/api/cleared', (req, res) => {
+    try {
+        const cleared = db.prepare('SELECT transaction_key FROM cleared_transactions').all();
+        res.json(cleared.map(c => c.transaction_key));
+    } catch (error) {
+        console.error('Error fetching cleared transactions:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Mark transaction as cleared
+app.post('/api/cleared', (req, res) => {
+    try {
+        const { transaction_key } = req.body;
+        
+        const stmt = db.prepare(`
+            INSERT INTO cleared_transactions (transaction_key)
+            VALUES (?)
+            ON CONFLICT(transaction_key) DO NOTHING
+        `);
+        
+        stmt.run(transaction_key);
+        res.json({ success: true, transaction_key });
+    } catch (error) {
+        console.error('Error marking transaction cleared:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Unmark transaction (remove from cleared)
+app.delete('/api/cleared/:transaction_key', (req, res) => {
+    try {
+        const { transaction_key } = req.params;
+        db.prepare('DELETE FROM cleared_transactions WHERE transaction_key = ?').run(transaction_key);
+        res.json({ success: true, message: 'Transaction unmarked' });
+    } catch (error) {
+        console.error('Error unmarking transaction:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Reset database to new random data
+app.post('/api/reset', (req, res) => {
+    try {
+        // Delete all data
+        db.prepare('DELETE FROM cleared_transactions').run();
+        db.prepare('DELETE FROM overrides').run();
+        db.prepare('DELETE FROM bills').run();
+        db.prepare('DELETE FROM settings').run();
+        
+        // Re-run setup to generate new random data
+        const { generateRandomData } = require('./database');
+        
+        // Manually regenerate (same logic as in database.js)
+        const billNames = [
+            'Mortgage Payment', 'Rent Payment', 'Car Loan', 'Student Loan', 
+            'Credit Card Payment', 'Insurance Premium', 'Utility Bill', 
+            'Internet Service', 'Phone Bill', 'Streaming Services',
+            'Gym Membership', 'HOA Fees', 'Storage Unit', 'Pet Care'
+        ];
+
+        const accountNames = [
+            'Primary Checking', 'Bills Account', 'Personal Spending',
+            'Emergency Fund', 'Savings Account', 'Investment Account',
+            'High-Yield Savings', 'Money Market', 'Reserve Account'
+        ];
+
+        const frequencies = ['monthly', 'monthly', 'monthly', 'quarterly', 'semi-annual'];
+
+        const shuffle = (array) => {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        };
+
+        const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const randomAmount = (min, max) => (Math.random() * (max - min) + min).toFixed(2);
+
+        const shuffledAccounts = shuffle(accountNames);
+        
+        db.prepare(`
+            INSERT INTO settings (
+                id, income_per_paycheck, payroll_day_1, payroll_day_2,
+                bills_account_name, bills_account_deposit,
+                personal_account_name, personal_account_deposit,
+                savings_account_1_name, savings_account_1_deposit,
+                savings_account_2_name, starting_balance
+            ) VALUES (
+                1, ?, ?, ?,
+                ?, ?,
+                ?, ?,
+                ?, ?,
+                ?, ?
+            )
+        `).run(
+            parseFloat(randomAmount(3000, 6000)),
+            random(1, 15),
+            31,
+            shuffledAccounts[0], parseFloat(randomAmount(1000, 2500)),
+            shuffledAccounts[1], parseFloat(randomAmount(1000, 2500)),
+            shuffledAccounts[2], parseFloat(randomAmount(100, 500)),
+            shuffledAccounts[3],
+            parseFloat(randomAmount(100, 1000))
+        );
+
+        const shuffledBills = shuffle(billNames).slice(0, random(6, 10));
+        const insertBill = db.prepare(`
+            INSERT INTO bills (name, base_amount, due_day, frequency, notes)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+
+        shuffledBills.forEach(billName => {
+            const amount = randomAmount(50, 2000);
+            const dueDay = random(1, 28);
+            const frequency = frequencies[random(0, frequencies.length - 1)];
+            const notes = frequency === 'monthly' ? 'Fixed' : `Paid ${frequency}`;
+            
+            insertBill.run(billName, amount, dueDay, frequency, notes);
+        });
+
+        res.json({ success: true, message: 'Database reset with new random data' });
+    } catch (error) {
+        console.error('Error resetting database:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Export data (for backup)
+app.get('/api/export', (req, res) => {
+    try {
+        const settings = db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        const bills = db.prepare('SELECT * FROM bills').all();
+        const overrides = db.prepare('SELECT * FROM overrides').all();
+        const cleared = db.prepare('SELECT transaction_key FROM cleared_transactions').all();
+
+        const exportData = {
+            settings,
+            bills,
+            overrides,
+            clearedTransactions: cleared.map(c => c.transaction_key),
+            exportDate: new Date().toISOString()
+        };
+
+        res.json(exportData);
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Serve frontend
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`
+╔════════════════════════════════════════════╗
+║     Budget Manager Server                  ║
+╠════════════════════════════════════════════╣
+║  Server running on: http://localhost:${PORT.toString().padEnd(4)} ║
+║                                            ║
+║  Access from other devices on network:     ║
+║  http://[your-ip]:${PORT.toString().padEnd(4)}                     ║
+║                                            ║
+║  Press Ctrl+C to stop                      ║
+╚════════════════════════════════════════════╝
+    `);
+});

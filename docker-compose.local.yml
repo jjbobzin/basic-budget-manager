@@ -1,0 +1,33 @@
+version: '3.8'
+
+# LOCAL BUILD VERSION
+# This builds the Docker image from source code in the current directory
+# Use this when: developing, making changes, or deploying from Git
+
+services:
+  budget-manager:
+    container_name: budget-manager
+    build: .                      # Builds from Dockerfile in current directory
+    image: budget-manager:latest  # Names the built image
+    ports:
+      - "54321:54321"             # External:Internal port mapping
+    volumes:
+      - ./data:/app/data          # Persistent database storage
+    environment:
+      - PORT=54321
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:54321/api/settings', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  data:
+
+# USAGE:
+# docker-compose up -d                    # First run (builds image)
+# docker-compose build --no-cache         # Rebuild after code changes
+# docker-compose up -d                    # Start with new build

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>budget-manager</Name>
+  <Repository>jjbobzin/budget-manager:latest</Repository>
+  <Registry>https://hub.docker.com/r/jjbobzin/budget-manager</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/jjbobzin/budget-manager/issues</Support>
+  <Project>https://github.com/jjbobzin/budget-manager</Project>
+  <Overview>Personal budget management application with SQLite database. Features budget allocation calculator, 12-month cash flow forecast, bill management with multiple frequencies, and customizable account names. Perfect for tracking monthly bills and planning ahead.</Overview>
+  <Category>Tools: Productivity: Finance:</Category>
+  <WebUI>http://[IP]:[PORT:54321]</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/jjbobzin/budget-manager/main/icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled></DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="WebUI Port" Target="54321" Default="54321" Mode="tcp" Description="Port for accessing the web interface" Type="Port" Display="always" Required="true" Mask="false">54321</Config>
+  <Config Name="Database Storage" Target="/app/data" Default="/mnt/user/appdata/budget-manager/data" Mode="rw" Description="Persistent storage for the SQLite database" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/budget-manager/data</Config>
+  <Config Name="PORT" Target="PORT" Default="54321" Mode="" Description="Internal port (should match WebUI Port)" Type="Variable" Display="advanced" Required="false" Mask="false">54321</Config>
+  <Config Name="NODE_ENV" Target="NODE_ENV" Default="production" Mode="" Description="Node environment" Type="Variable" Display="advanced" Required="false" Mask="false">production</Config>
+</Container>

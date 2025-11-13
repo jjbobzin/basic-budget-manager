@@ -1,0 +1,35 @@
+version: '3.8'
+
+# DOCKER HUB VERSION
+# This pulls a pre-built image from Docker Hub
+# Use this when: deploying to production without source code
+
+services:
+  budget-manager:
+    container_name: budget-manager
+    image: jjbobzin/budget-manager:latest  # Your Docker Hub image
+    ports:
+      - "54321:54321"                      # External:Internal port mapping
+    volumes:
+      - ./data:/app/data                   # Persistent database storage
+    environment:
+      - PORT=54321
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:54321/api/settings', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  data:
+
+# USAGE:
+# docker-compose -f docker-compose.hub.yml pull    # Download latest image
+# docker-compose -f docker-compose.hub.yml up -d   # Start container
+#
+# To update:
+# docker-compose -f docker-compose.hub.yml pull    # Get new version
+# docker-compose -f docker-compose.hub.yml up -d   # Restart with new version

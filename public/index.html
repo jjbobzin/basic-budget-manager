@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 1200px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* ========== LOGIN SCREEN ========== */
+        .login-container, .registration-container {
+            max-width: 400px;
+            padding: 40px;
+            margin: 0 auto;
+        }
+
+        .login-header, .registration-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1, .registration-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .login-header p, .registration-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-success {
+            background: #4caf50;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #1565c0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .link-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .link-text a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== SETUP WIZARD ========== */
+        .wizard-container {
+            padding: 40px;
+        }
+
+        .wizard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .wizard-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .wizard-header p {
+            color: #666;
+        }
+
+        .wizard-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .wizard-progress::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .wizard-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .wizard-step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .wizard-step.active .wizard-step-circle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+
+        .wizard-step.completed .wizard-step-circle {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: white;
+        }
+
+        .wizard-step-label {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .wizard-step.active .wizard-step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .wizard-content {
+            margin-bottom: 30px;
+        }
+
+        .wizard-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .wizard-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .wizard-buttons .btn {
+            width: auto;
+            padding: 12px 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .bill-form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .bill-form h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .bill-list {
+            margin-top: 20px;
+        }
+
+        .bill-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .bill-item-info {
+            flex: 1;
+        }
+
+        .bill-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .bill-item-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .bill-item-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* ========== MAIN APP ========== */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 900px;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .app-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-name {
+            font-size: 14px;
+        }
+
+        .admin-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .app-tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .app-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .app-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ========== ADMIN PANEL ========== */
+        .admin-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .admin-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .admin-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .admin-toggle label {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #4caf50;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .user-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .user-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .user-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .admin-tag {
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .user-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .user-action-btn:hover {
+            opacity: 0.8;
+        }
+
+        .user-action-btn.delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .user-action-btn.toggle-admin {
+            background: #667eea;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Settings styles */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .settings-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .settings-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        /* Bills table */
+        .bills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .add-bill-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin: 0 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .edit-btn {
+            color: #667eea;
+        }
+
+        .delete-btn {
+            color: #dc3545;
+        }
+
+        .action-btn:hover {
+            background: #f0f0f0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        /* Running balance table */
+        .balance-month {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .balance-month h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .balance-row:last-child {
+            border-bottom: none;
+        }
+
+        .balance-row.cleared {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .balance-item {
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+        }
+
+        .balance-amount.negative {
+            color: #dc3545;
+        }
+
+        .balance-amount.positive {
+            color: #4caf50;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .app-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .app-tabs {
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ========== LOGIN SCREEN ========== -->
+        <div id="loginScreen" class="hidden">
+            <div class="login-container">
+                <div class="login-header">
+                    <h1>💰 Budget Manager</h1>
+                    <p>Sign in to continue</p>
+                </div>
+                <div id="loginError" class="error-message hidden"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <input type="text" id="loginUsername" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn">Sign In</button>
+                </form>
+                <div class="link-text" id="registrationLink">
+                    <a href="#" onclick="showRegistrationScreen(); return false;">Create an account</a>
+                </div>
+                <div id="registrationDisabledMessage" class="info-message hidden" style="margin-top: 20px;">
+                    Registration is currently disabled. Please contact an administrator.
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== REGISTRATION SCREEN ========== -->
+        <div id="registrationScreen" class="hidden">
+            <div class="registration-container">
+                <div class="registration-header">
+                    <h1>💰 Budget Manager</h1>
+                    <p>Create your account</p>
+                </div>
+                <div id="registrationError" class="error-message hidden"></div>
+                <div id="registrationDisabled" class="info-message hidden">
+                    Registration is currently disabled. Please contact an administrator.
+                </div>
+                <form id="registrationForm">
+                    <div class="form-group">
+                        <label for="regUsername">Username</label>
+                        <input type="text" id="regUsername" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password</label>
+                        <input type="password" id="regPassword" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPasswordConfirm">Confirm Password</label>
+                        <input type="password" id="regPasswordConfirm" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn">Create Account</button>
+                </form>
+                <div class="link-text">
+                    Already have an account? <a href="#" onclick="showLoginScreen(); return false;">Sign in</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SETUP WIZARD ========== -->
+        <div id="setupWizard" class="hidden">
+            <div class="wizard-container">
+                <div class="wizard-header">
+                    <h1 id="wizardTitle">Welcome to Budget Manager! 🎉</h1>
+                    <p id="wizardSubtitle">Let's set up your budget in a few simple steps</p>
+                </div>
+
+                <div class="wizard-progress">
+                    <div class="wizard-step active" data-step="1">
+                        <div class="wizard-step-circle">1</div>
+                        <div class="wizard-step-label" id="step1Label">Account</div>
+                    </div>
+                    <div class="wizard-step" data-step="2">
+                        <div class="wizard-step-circle">2</div>
+                        <div class="wizard-step-label">Income</div>
+                    </div>
+                    <div class="wizard-step" data-step="3">
+                        <div class="wizard-step-circle">3</div>
+                        <div class="wizard-step-label">Accounts</div>
+                    </div>
+                    <div class="wizard-step" data-step="4">
+                        <div class="wizard-step-circle">4</div>
+                        <div class="wizard-step-label">Bills</div>
+                    </div>
+                </div>
+
+                <div id="setupError" class="error-message hidden"></div>
+                <div id="setupSuccess" class="success-message hidden"></div>
+
+                <!-- Step 1: Create Account (only for first user) -->
+                <div class="wizard-content" id="wizardStep1">
+                    <h2>Create Your Account</h2>
+                    <div class="form-group">
+                        <label for="setupUsername">Username</label>
+                        <input type="text" id="setupUsername" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="setupPassword">Password</label>
+                        <input type="password" id="setupPassword" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="setupPasswordConfirm">Confirm Password</label>
+                        <input type="password" id="setupPasswordConfirm" required autocomplete="new-password">
+                    </div>
+                </div>
+
+                <!-- Step 1b: Budget Setup (for registered users, skips account creation) -->
+                <div class="wizard-content hidden" id="wizardStep1b">
+                    <h2>Set Up Your Budget</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Configure your income and account information</p>
+                </div>
+
+                <!-- Step 2: Income Configuration -->
+                <div class="wizard-content hidden" id="wizardStep2">
+                    <h2>Configure Your Income</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Set up how often you get paid and how much.</p>
+                    <div class="form-group">
+                        <label for="setupIncome">Income Per Paycheck ($)</label>
+                        <input type="number" id="setupIncome" step="0.01" placeholder="0.00" required>
+                        <small style="color: #666;">Amount you receive each paycheck after taxes/deductions</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="setupPayFrequency">Pay Frequency</label>
+                        <select id="setupPayFrequency" onchange="updatePaydayInputs()">
+                            <option value="semi-monthly">Twice per month (Semi-monthly)</option>
+                            <option value="bi-weekly">Every 2 weeks (Bi-weekly)</option>
+                            <option value="weekly">Every week (Weekly)</option>
+                            <option value="monthly">Once per month (Monthly)</option>
+                        </select>
+                        <small style="color: #666;">Most common: Semi-monthly (e.g., 15th and last day)</small>
+                    </div>
+                    <div id="payDayInputs" class="form-row">
+                        <div class="form-group">
+                            <label for="setupPayday1">First Payday (Day of Month)</label>
+                            <input type="number" id="setupPayday1" min="1" max="31" value="15" required>
+                            <small style="color: #666;">Example: 15 for the 15th</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="setupPayday2">Second Payday (Day of Month)</label>
+                            <input type="number" id="setupPayday2" min="1" max="31" value="31" required>
+                            <small style="color: #666;">Example: 31 for last day</small>
+                        </div>
+                    </div>
+                    <div id="payFrequencyNote" class="info-message" style="margin-top: 15px;">
+                        <strong>Note:</strong> For now, we calculate based on 2 paychecks per month. Weekly and bi-weekly pay will be converted to approximate semi-monthly dates.
+                    </div>
+                </div>
+
+                <!-- Step 3: Account Configuration -->
+                <div class="wizard-content hidden" id="wizardStep3">
+                    <h2>Set Up Your Accounts & Deposits</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Name your accounts and set how much goes into each one per paycheck.</p>
+                    
+                    <!-- Bills Account (Required) -->
+                    <div class="settings-section">
+                        <h3>💳 Bills Account (Required)</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">This account pays all your bills. The 12-month forecast tracks this account.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setupBillsAccount">Account Name</label>
+                                <input type="text" id="setupBillsAccount" value="Bills Checking" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="setupBillsDeposit">Deposit Per Paycheck ($)</label>
+                                <input type="number" id="setupBillsDeposit" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Spending Account -->
+                    <div class="settings-section">
+                        <h3>🛍️ Personal Spending Account</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">For groceries, gas, eating out, etc.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setupPersonalAccount">Account Name</label>
+                                <input type="text" id="setupPersonalAccount" value="Personal Spending" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="setupPersonalDeposit">Deposit Per Paycheck ($)</label>
+                                <input type="number" id="setupPersonalDeposit" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Savings Account 1 -->
+                    <div class="settings-section">
+                        <h3>💰 Savings Account 1</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Emergency fund, vacation, or other savings goal.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setupSavings1Account">Account Name</label>
+                                <input type="text" id="setupSavings1Account" value="Emergency Fund" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="setupSavings1Deposit">Deposit Per Paycheck ($)</label>
+                                <input type="number" id="setupSavings1Deposit" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Savings Account 2 (Remainder) -->
+                    <div class="settings-section">
+                        <h3>🏦 Additional Savings/Reserve Account</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Optional: Gets whatever's left after other deposits. Leave blank to skip.</p>
+                        <div class="form-group">
+                            <label for="setupSavings2Account">Account Name (Optional)</label>
+                            <input type="text" id="setupSavings2Account" value="Reserve Fund" placeholder="Leave blank to skip">
+                            <small style="color: #666;">This account gets the remainder after all other deposits</small>
+                        </div>
+                    </div>
+
+                    <!-- Starting Balance -->
+                    <div class="settings-section">
+                        <h3>💵 Starting Balance</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Current balance in your Bills Account (for accurate 12-month forecast).</p>
+                        <div class="form-group">
+                            <label for="setupStartingBalance">Bills Account Current Balance ($)</label>
+                            <input type="number" id="setupStartingBalance" step="0.01" value="0" placeholder="0.00" required>
+                            <small style="color: #666;">Enter your current balance, or 0 if starting fresh</small>
+                        </div>
+                    </div>
+
+                    <!-- Deposit Summary -->
+                    <div class="info-message" style="margin-top: 20px;">
+                        <strong>💡 Tip:</strong> Make sure your total deposits don't exceed your income per paycheck!
+                        <div id="depositSummary" style="margin-top: 10px; font-family: monospace;"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Bills (Optional) -->
+                <div class="wizard-content hidden" id="wizardStep4">
+                    <h2>Add Bills (Optional)</h2>
+                    <p style="color: #666; margin-bottom: 20px;">You can add bills now or skip and add them later.</p>
+                    
+                    <div class="bill-form">
+                        <h3>Add a Bill</h3>
+                        <div class="form-group">
+                            <label for="setupBillName">Bill Name</label>
+                            <input type="text" id="setupBillName" placeholder="e.g., Mortgage">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setupBillAmount">Amount ($)</label>
+                                <input type="number" id="setupBillAmount" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="setupBillDay">Due Day</label>
+                                <input type="number" id="setupBillDay" min="1" max="31" placeholder="1">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setupBillFrequency">Frequency</label>
+                                <select id="setupBillFrequency">
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="semi-annual">Semi-Annual</option>
+                                    <option value="annual">Annual</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn" onclick="addSetupBill()">Add Bill</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bill-list" id="setupBillsList"></div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button type="button" class="btn btn-secondary" id="wizardPrevBtn" onclick="prevWizardStep()" style="display:none;">Previous</button>
+                    <button type="button" class="btn" id="wizardNextBtn" onclick="nextWizardStep()">Next</button>
+                    <button type="button" class="btn" id="wizardCompleteBtn" onclick="completeSetup()" style="display:none;">Complete Setup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MAIN APP ========== -->
+        <div id="mainApp" class="hidden">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">
+                        <h1>💰 Budget Manager</h1>
+                    </div>
+                    <div class="app-user">
+                        <span class="user-name" id="currentUsername"></span>
+                        <span class="admin-badge hidden" id="adminBadge">Admin</span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+
+                <div class="app-tabs">
+                    <button class="app-tab active" onclick="switchTab('budget')">Budget Allocation</button>
+                    <button class="app-tab" onclick="switchTab('forecast')">12-Month Forecast</button>
+                    <button class="app-tab" onclick="switchTab('bills')">Manage Bills</button>
+                    <button class="app-tab" onclick="switchTab('settings')">Settings</button>
+                    <button class="app-tab hidden" id="adminTab" onclick="switchTab('admin')">Admin Panel</button>
+                </div>
+
+                <div class="app-content">
+                    <!-- Budget Allocation Tab -->
+                    <div id="budgetTab" class="tab-content active">
+                        <h2>Budget Allocation Calculator</h2>
+                        <div id="budgetContent"></div>
+                    </div>
+
+                    <!-- Forecast Tab -->
+                    <div id="forecastTab" class="tab-content">
+                        <h2>12-Month Cash Flow Forecast</h2>
+                        <div id="forecastContent"></div>
+                    </div>
+
+                    <!-- Bills Tab -->
+                    <div id="billsTab" class="tab-content">
+                        <div class="bills-header">
+                            <h2>Manage Bills</h2>
+                            <button class="add-bill-btn" onclick="showAddBillModal()">+ Add Bill</button>
+                        </div>
+                        <table id="billsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Amount</th>
+                                    <th>Due Day</th>
+                                    <th>Frequency</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billsTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div id="settingsTab" class="tab-content">
+                        <h2>Settings</h2>
+                        <div id="settingsContent"></div>
+                        <button class="btn" onclick="saveSettings()">Save Settings</button>
+                        <hr style="margin: 30px 0;">
+                        <h3>Change Password</h3>
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword">
+                        </div>
+                        <button class="btn btn-secondary" onclick="changePassword()">Change Password</button>
+                        <hr style="margin: 30px 0;">
+                        <h3>Export Data</h3>
+                        <button class="btn btn-secondary" onclick="exportData()">Export Data as JSON</button>
+                    </div>
+
+                    <!-- Admin Panel Tab -->
+                    <div id="adminPanelTab" class="tab-content">
+                        <h2>Admin Panel</h2>
+                        
+                        <div class="admin-section">
+                            <h3>System Settings</h3>
+                            <div class="admin-toggle">
+                                <label>Allow New User Registrations</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="allowRegistrationToggle" onchange="toggleRegistration()">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="admin-section">
+                            <h3>User Management</h3>
+                            <div class="user-table" id="userTableContainer"></div>
+                        </div>
+
+                        <div class="admin-section">
+                            <h3>System Statistics</h3>
+                            <div class="stats-grid" id="adminStats"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Modal -->
+    <div id="billModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="billModalTitle">Add Bill</h2>
+                <button class="close-modal" onclick="closeBillModal()">&times;</button>
+            </div>
+            <form id="billForm" onsubmit="saveBill(event)">
+                <input type="hidden" id="billId">
+                <div class="form-group">
+                    <label for="billName">Bill Name</label>
+                    <input type="text" id="billName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="billAmount">Amount ($)</label>
+                        <input type="number" id="billAmount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="billDueDay">Due Day</label>
+                        <input type="number" id="billDueDay" min="1" max="31" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="billFrequency">Frequency</label>
+                    <select id="billFrequency" required>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="semi-annual">Semi-Annual</option>
+                        <option value="annual">Annual</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="billNotes">Notes</label>
+                    <input type="text" id="billNotes">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBillModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentStep = 1;
+        let setupBills = [];
+        let isFirstUser = false;
+        let isRegistering = false;
+        let appData = {
+            settings: null,
+            bills: [],
+            overrides: [],
+            cleared: [],
+            isAdmin: false
+        };
+
+        // ========== INITIALIZATION ========== 
+        async function init() {
+            try {
+                // Check if setup is needed
+                const setupStatus = await fetch('/api/setup/status').then(r => r.json());
+                
+                if (setupStatus.needsSetup) {
+                    isFirstUser = true;
+                    showSetupWizard(true);
+                    return;
+                }
+
+                // Check if authenticated
+                const authStatus = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                }).then(r => r.json());
+
+                if (authStatus.authenticated) {
+                    showMainApp(authStatus.username, authStatus.isAdmin);
+                } else {
+                    showLoginScreen(setupStatus.allowRegistration);
+                }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to initialize app');
+            }
+        }
+
+        function showLoginScreen(allowRegistration = true) {
+            hideAll();
+            document.getElementById('loginScreen').classList.remove('hidden');
+            
+            if (allowRegistration) {
+                document.getElementById('registrationLink').classList.remove('hidden');
+                document.getElementById('registrationDisabledMessage').classList.add('hidden');
+            } else {
+                document.getElementById('registrationLink').classList.add('hidden');
+                document.getElementById('registrationDisabledMessage').classList.remove('hidden');
+            }
+        }
+
+        function showRegistrationScreen() {
+            fetch('/api/setup/status')
+                .then(r => r.json())
+                .then(status => {
+                    if (!status.allowRegistration) {
+                        hideAll();
+                        document.getElementById('registrationScreen').classList.remove('hidden');
+                        document.getElementById('registrationForm').classList.add('hidden');
+                        document.getElementById('registrationDisabled').classList.remove('hidden');
+                    } else {
+                        hideAll();
+                        document.getElementById('registrationScreen').classList.remove('hidden');
+                        document.getElementById('registrationForm').classList.remove('hidden');
+                        document.getElementById('registrationDisabled').classList.add('hidden');
+                    }
+                });
+        }
+
+        function showSetupWizard(firstUser = false) {
+            hideAll();
+            isFirstUser = firstUser;
+            document.getElementById('setupWizard').classList.remove('hidden');
+            
+            if (firstUser) {
+                document.getElementById('wizardTitle').textContent = 'Welcome to Budget Manager! 🎉';
+                document.getElementById('wizardSubtitle').textContent = "Let's set up your account in a few simple steps";
+                document.getElementById('step1Label').textContent = 'Account';
+                document.getElementById('wizardStep1').classList.remove('hidden');
+                document.getElementById('wizardStep1b').classList.add('hidden');
+            } else {
+                document.getElementById('wizardTitle').textContent = 'Set Up Your Budget';
+                document.getElementById('wizardSubtitle').textContent = 'Configure your budget in a few simple steps';
+                document.getElementById('step1Label').textContent = 'Budget';
+                document.getElementById('wizardStep1').classList.add('hidden');
+                document.getElementById('wizardStep1b').classList.remove('hidden');
+                currentStep = 1;
+            }
+            
+            // Setup event listeners for deposit summary
+            setTimeout(() => {
+                const depositInputs = ['setupIncome', 'setupBillsDeposit', 'setupPersonalDeposit', 'setupSavings1Deposit', 'setupSavings2Account'];
+                depositInputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.removeEventListener('input', updateDepositSummary); // Remove if exists
+                        el.removeEventListener('change', updateDepositSummary);
+                        el.addEventListener('input', updateDepositSummary);
+                        el.addEventListener('change', updateDepositSummary);
+                    }
+                });
+            }, 100);
+        }
+
+        function showMainApp(username, isAdmin = false) {
+            hideAll();
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('currentUsername').textContent = username;
+            
+            appData.isAdmin = isAdmin;
+            
+            // Show/hide admin features based on role
+            const adminBadge = document.getElementById('adminBadge');
+            const adminTab = document.getElementById('adminTab');
+            
+            if (isAdmin) {
+                adminBadge.classList.remove('hidden');
+                adminTab.classList.remove('hidden');
+            } else {
+                adminBadge.classList.add('hidden');
+                adminTab.classList.add('hidden');
+                // Switch away from admin tab if currently on it
+                switchTab('budget');
+            }
+            
+            loadAppData();
+        }
+
+        function hideAll() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registrationScreen').classList.add('hidden');
+            document.getElementById('setupWizard').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // ========== LOGIN ========== 
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMainApp(data.username, data.isAdmin);
+                } else {
+                    showError(data.error || 'Login failed', 'loginError');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.', 'loginError');
+            }
+        });
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const setupStatus = await fetch('/api/setup/status').then(r => r.json());
+                showLoginScreen(setupStatus.allowRegistration);
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // ========== REGISTRATION ========== 
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regPasswordConfirm').value;
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match', 'registrationError');
+                return;
+            }
+
+            if (password.length < 4) {
+                showError('Password must be at least 4 characters', 'registrationError');
+                return;
+            }
+
+            // Store credentials and show setup wizard
+            document.getElementById('setupUsername').value = username;
+            document.getElementById('setupPassword').value = password;
+            document.getElementById('setupPasswordConfirm').value = password;
+            
+            isRegistering = true;
+            showSetupWizard(false);
+        });
+
+        function updatePaydayInputs() {
+            const frequency = document.getElementById('setupPayFrequency').value;
+            const payDayInputs = document.getElementById('payDayInputs');
+            const note = document.getElementById('payFrequencyNote');
+
+            if (frequency === 'semi-monthly') {
+                payDayInputs.style.display = 'grid';
+                note.innerHTML = '<strong>Semi-monthly:</strong> You get paid twice per month on specific dates (e.g., 15th and last day).';
+            } else if (frequency === 'bi-weekly') {
+                payDayInputs.style.display = 'none';
+                note.innerHTML = '<strong>Bi-weekly:</strong> You get paid every 2 weeks (26 times/year). We\'ll approximate this as 2 paychecks per month.';
+            } else if (frequency === 'weekly') {
+                payDayInputs.style.display = 'none';
+                note.innerHTML = '<strong>Weekly:</strong> You get paid every week (52 times/year). We\'ll approximate this as 2 paychecks per month.';
+            } else if (frequency === 'monthly') {
+                payDayInputs.style.display = 'none';
+                note.innerHTML = '<strong>Monthly:</strong> You get paid once per month (12 times/year). We\'ll show this as occurring on the 1st.';
+            }
+            
+            // Set default values based on frequency
+            if (frequency === 'bi-weekly') {
+                document.getElementById('setupPayday1').value = 1;
+                document.getElementById('setupPayday2').value = 15;
+            } else if (frequency === 'weekly') {
+                document.getElementById('setupPayday1').value = 1;
+                document.getElementById('setupPayday2').value = 15;
+            } else if (frequency === 'monthly') {
+                document.getElementById('setupPayday1').value = 1;
+                document.getElementById('setupPayday2').value = 1;
+            }
+        }
+
+        function updateDepositSummary() {
+            const income = parseFloat(document.getElementById('setupIncome').value) || 0;
+            const bills = parseFloat(document.getElementById('setupBillsDeposit').value) || 0;
+            const personal = parseFloat(document.getElementById('setupPersonalDeposit').value) || 0;
+            const savings1 = parseFloat(document.getElementById('setupSavings1Deposit').value) || 0;
+            
+            const total = bills + personal + savings1;
+            const remainder = income - total;
+            const savings2Name = document.getElementById('setupSavings2Account').value || 'Reserve Fund';
+            
+            const summary = document.getElementById('depositSummary');
+            if (income > 0) {
+                summary.innerHTML = `
+                    Income per paycheck: $${income.toFixed(2)}<br>
+                    Bills: $${bills.toFixed(2)}<br>
+                    Personal: $${personal.toFixed(2)}<br>
+                    Savings 1: $${savings1.toFixed(2)}<br>
+                    ${savings2Name}: $${remainder.toFixed(2)} (remainder)<br>
+                    <strong>Total: $${income.toFixed(2)}</strong>
+                    ${remainder < 0 ? '<br><span style="color: #dc3545;">⚠️ Warning: Deposits exceed income!</span>' : ''}
+                `;
+            }
+        }
+
+        // ========== SETUP WIZARD ========== 
+        function nextWizardStep() {
+            if (!validateWizardStep(currentStep)) return;
+
+            currentStep++;
+            updateWizardUI();
+        }
+
+        function prevWizardStep() {
+            currentStep--;
+            updateWizardUI();
+        }
+
+        function validateWizardStep(step) {
+            const errorEl = document.getElementById('setupError');
+            errorEl.classList.add('hidden');
+
+            if (step === 1 && isFirstUser) {
+                const username = document.getElementById('setupUsername').value;
+                const password = document.getElementById('setupPassword').value;
+                const confirm = document.getElementById('setupPasswordConfirm').value;
+
+                if (!username || !password) {
+                    showError('Please fill in all fields', 'setupError');
+                    return false;
+                }
+
+                if (password !== confirm) {
+                    showError('Passwords do not match', 'setupError');
+                    return false;
+                }
+
+                if (password.length < 4) {
+                    showError('Password must be at least 4 characters', 'setupError');
+                    return false;
+                }
+            }
+
+            if (step === 2) {
+                const income = document.getElementById('setupIncome').value;
+                if (!income || income <= 0) {
+                    showError('Please enter a valid income amount', 'setupError');
+                    return false;
+                }
+            }
+
+            if (step === 3) {
+                const required = ['setupBillsAccount', 'setupBillsDeposit', 'setupPersonalAccount', 
+                                 'setupPersonalDeposit', 'setupSavings1Account', 'setupSavings1Deposit', 
+                                 'setupSavings2Account', 'setupStartingBalance'];
+                
+                for (const id of required) {
+                    if (!document.getElementById(id).value) {
+                        showError('Please fill in all account fields', 'setupError');
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        function updateWizardUI() {
+            const maxStep = isFirstUser ? 4 : 4;
+            
+            // Hide all steps
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`wizardStep${i}`);
+                if (stepEl) stepEl.classList.add('hidden');
+                
+                const wizStep = document.querySelector(`.wizard-step[data-step="${i}"]`);
+                if (wizStep) {
+                    wizStep.classList.remove('active', 'completed');
+                    if (i < currentStep) {
+                        wizStep.classList.add('completed');
+                    }
+                }
+            }
+            
+            document.getElementById('wizardStep1b').classList.add('hidden');
+
+            // Show current step
+            if (currentStep === 1) {
+                if (isFirstUser) {
+                    document.getElementById('wizardStep1').classList.remove('hidden');
+                } else {
+                    document.getElementById('wizardStep1b').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById(`wizardStep${currentStep}`).classList.remove('hidden');
+            }
+            
+            // Trigger specific step actions
+            if (currentStep === 2) {
+                updatePaydayInputs();
+            } else if (currentStep === 3) {
+                setTimeout(updateDepositSummary, 100);
+            }
+            
+            const currentWizStep = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+            if (currentWizStep) currentWizStep.classList.add('active');
+
+            // Update buttons
+            document.getElementById('wizardPrevBtn').style.display = currentStep > 1 ? 'block' : 'none';
+            document.getElementById('wizardNextBtn').style.display = currentStep < maxStep ? 'block' : 'none';
+            document.getElementById('wizardCompleteBtn').style.display = currentStep === maxStep ? 'block' : 'none';
+        }
+
+        function addSetupBill() {
+            const name = document.getElementById('setupBillName').value;
+            const amount = parseFloat(document.getElementById('setupBillAmount').value);
+            const day = parseInt(document.getElementById('setupBillDay').value);
+            const frequency = document.getElementById('setupBillFrequency').value;
+
+            if (!name || !amount || !day) {
+                showError('Please fill in all bill fields', 'setupError');
+                return;
+            }
+
+            setupBills.push({
+                name,
+                base_amount: amount,
+                due_day: day,
+                frequency,
+                notes: ''
+            });
+
+            // Clear form
+            document.getElementById('setupBillName').value = '';
+            document.getElementById('setupBillAmount').value = '';
+            document.getElementById('setupBillDay').value = '';
+
+            renderSetupBills();
+        }
+
+        function removeSetupBill(index) {
+            setupBills.splice(index, 1);
+            renderSetupBills();
+        }
+
+        function renderSetupBills() {
+            const listEl = document.getElementById('setupBillsList');
+            if (setupBills.length === 0) {
+                listEl.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No bills added yet</p>';
+                return;
+            }
+
+            listEl.innerHTML = setupBills.map((bill, index) => `
+                <div class="bill-item">
+                    <div class="bill-item-info">
+                        <div class="bill-item-name">${bill.name}</div>
+                        <div class="bill-item-details">$${bill.base_amount.toFixed(2)} • Due day ${bill.due_day} • ${bill.frequency}</div>
+                    </div>
+                    <button class="bill-item-remove" onclick="removeSetupBill(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        async function completeSetup() {
+            if (!validateWizardStep(4)) return;
+
+            try {
+                const setupData = {
+                    username: document.getElementById('setupUsername').value,
+                    password: document.getElementById('setupPassword').value,
+                    settings: {
+                        income_per_paycheck: parseFloat(document.getElementById('setupIncome').value),
+                        payroll_day_1: parseInt(document.getElementById('setupPayday1').value),
+                        payroll_day_2: parseInt(document.getElementById('setupPayday2').value),
+                        bills_account_name: document.getElementById('setupBillsAccount').value,
+                        bills_account_deposit: parseFloat(document.getElementById('setupBillsDeposit').value),
+                        personal_account_name: document.getElementById('setupPersonalAccount').value,
+                        personal_account_deposit: parseFloat(document.getElementById('setupPersonalDeposit').value),
+                        savings_account_1_name: document.getElementById('setupSavings1Account').value,
+                        savings_account_1_deposit: parseFloat(document.getElementById('setupSavings1Deposit').value),
+                        savings_account_2_name: document.getElementById('setupSavings2Account').value,
+                        starting_balance: parseFloat(document.getElementById('setupStartingBalance').value)
+                    },
+                    bills: setupBills
+                };
+
+                const endpoint = isFirstUser ? '/api/setup/initialize' : '/api/auth/register';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(setupData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('Setup completed! Loading your budget...', 'setupSuccess');
+                    setTimeout(() => {
+                        showMainApp(setupData.username, data.isAdmin || false);
+                    }, 1500);
+                } else {
+                    showError(data.error || 'Setup failed', 'setupError');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.', 'setupError');
+            }
+        }
+
+        // ========== MAIN APP ========== 
+        async function loadAppData() {
+            try {
+                const [settings, bills, overrides, cleared] = await Promise.all([
+                    fetch('/api/settings', { credentials: 'include' }).then(r => handleAuthResponse(r)),
+                    fetch('/api/bills', { credentials: 'include' }).then(r => handleAuthResponse(r)),
+                    fetch('/api/overrides', { credentials: 'include' }).then(r => handleAuthResponse(r)),
+                    fetch('/api/cleared', { credentials: 'include' }).then(r => handleAuthResponse(r))
+                ]);
+
+                appData.settings = settings;
+                appData.bills = bills;
+                appData.overrides = overrides;
+                appData.cleared = cleared;
+                
+                renderAllTabs();
+                
+                if (appData.isAdmin) {
+                    loadAdminPanel();
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+                if (error.message === 'Unauthorized') {
+                    const setupStatus = await fetch('/api/setup/status').then(r => r.json());
+                    showLoginScreen(setupStatus.allowRegistration);
+                }
+            }
+        }
+
+        async function handleAuthResponse(response) {
+            if (response.status === 401) {
+                throw new Error('Unauthorized');
+            }
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+            return response.json();
+        }
+
+        function renderAllTabs() {
+            renderBudgetTab();
+            renderForecastTab();
+            renderBillsTab();
+            renderSettingsTab();
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.app-tab').forEach(tab => tab.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // If called programmatically, find and activate the correct tab
+                document.querySelectorAll('.app-tab').forEach(tab => {
+                    if (tab.textContent.toLowerCase().includes(tabName)) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'admin') {
+                // Only show admin panel if user is admin
+                if (appData.isAdmin) {
+                    document.getElementById('adminPanelTab').classList.add('active');
+                } else {
+                    // Redirect non-admin to budget
+                    document.getElementById('budgetTab').classList.add('active');
+                }
+            } else {
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+            }
+        }
+
+        // ========== BUDGET TAB ========== 
+        function renderBudgetTab() {
+            const s = appData.settings;
+            if (!s) return;
+
+            const totalIncome = s.income_per_paycheck * 2;
+            const totalDeposits = s.bills_account_deposit + s.personal_account_deposit + s.savings_account_1_deposit;
+            
+            // Calculate average monthly bills correctly
+            const totalBills = appData.bills.reduce((sum, bill) => {
+                const occurrencesPerYear = getOccurrencesPerYear(bill.frequency);
+                return sum + (bill.base_amount * occurrencesPerYear / 12);
+            }, 0);
+
+            const leftover = totalIncome - totalDeposits;
+            const billsDeposit = s.bills_account_deposit * 2;
+            const coverage = totalBills > 0 ? (billsDeposit / totalBills * 100) : 100;
+
+            document.getElementById('budgetContent').innerHTML = `
+                <div class="settings-grid">
+                    <div class="settings-section">
+                        <h3>💰 Monthly Income</h3>
+                        <p style="font-size: 24px; font-weight: 600; color: #4caf50;">$${totalIncome.toFixed(2)}</p>
+                        <p style="color: #666; font-size: 14px;">$${s.income_per_paycheck.toFixed(2)} × 2 paychecks</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>📊 Total Deposits</h3>
+                        <p style="font-size: 24px; font-weight: 600; color: #667eea;">$${(totalDeposits * 2).toFixed(2)}</p>
+                        <p style="color: #666; font-size: 14px;">Per month (2 paychecks)</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>💸 Monthly Bills</h3>
+                        <p style="font-size: 24px; font-weight: 600; color: #dc3545;">$${totalBills.toFixed(2)}</p>
+                        <p style="color: #666; font-size: 14px;">Average per month</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>✨ Leftover</h3>
+                        <p style="font-size: 24px; font-weight: 600; color: ${leftover >= 0 ? '#4caf50' : '#dc3545'};">$${leftover.toFixed(2)}</p>
+                        <p style="color: #666; font-size: 14px;">After deposits (per paycheck)</p>
+                    </div>
+                </div>
+                <div class="settings-section" style="margin-top: 20px;">
+                    <h3>📈 Bill Coverage</h3>
+                    <p style="font-size: 18px; color: ${coverage >= 100 ? '#4caf50' : '#dc3545'};">
+                        Your bills account deposit covers <strong>${coverage.toFixed(1)}%</strong> of your monthly bills
+                    </p>
+                    ${coverage < 100 ? `<p style="color: #dc3545;">⚠️ Warning: You may need to increase your bills account deposit</p>` : ''}
+                </div>
+                <div class="settings-grid" style="margin-top: 20px;">
+                    <div class="settings-section">
+                        <h3>${s.bills_account_name}</h3>
+                        <p style="font-size: 20px; font-weight: 600;">$${(s.bills_account_deposit * 2).toFixed(2)}/mo</p>
+                        <p style="color: #666; font-size: 14px;">$${s.bills_account_deposit.toFixed(2)} per paycheck</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>${s.personal_account_name}</h3>
+                        <p style="font-size: 20px; font-weight: 600;">$${(s.personal_account_deposit * 2).toFixed(2)}/mo</p>
+                        <p style="color: #666; font-size: 14px;">$${s.personal_account_deposit.toFixed(2)} per paycheck</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>${s.savings_account_1_name}</h3>
+                        <p style="font-size: 20px; font-weight: 600;">$${(s.savings_account_1_deposit * 2).toFixed(2)}/mo</p>
+                        <p style="color: #666; font-size: 14px;">$${s.savings_account_1_deposit.toFixed(2)} per paycheck</p>
+                    </div>
+                    <div class="settings-section">
+                        <h3>${s.savings_account_2_name}</h3>
+                        <p style="font-size: 20px; font-weight: 600;">$${(leftover * 2).toFixed(2)}/mo</p>
+                        <p style="color: #666; font-size: 14px;">$${leftover.toFixed(2)} remainder per paycheck</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== FORECAST TAB ========== 
+        function renderForecastTab() {
+            const s = appData.settings;
+            if (!s) return;
+
+            const months = [];
+            const today = new Date();
+            let carryForwardBalance = s.starting_balance;
+            
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const monthData = calculateBillsAccountMonth(date, s, carryForwardBalance);
+                
+                // Update carry forward for next month
+                if (monthData.transactions.length > 0) {
+                    carryForwardBalance = monthData.transactions[monthData.transactions.length - 1].balance;
+                }
+                
+                months.push({
+                    date,
+                    name: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    ...monthData
+                });
+            }
+
+            document.getElementById('forecastContent').innerHTML = months.map(month => {
+                const minBalance = Math.min(...month.transactions.map(t => t.balance));
+                const maxBalance = Math.max(...month.transactions.map(t => t.balance));
+                const avgBalance = month.transactions.reduce((sum, t) => sum + t.balance, 0) / month.transactions.length;
+
+                let html = `
+                    <div class="balance-month">
+                        <h3>${s.bills_account_name} - ${month.name}</h3>
+                        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                            Min: $${minBalance.toFixed(2)} | Avg: $${avgBalance.toFixed(2)} | Max: $${maxBalance.toFixed(2)}
+                        </p>
+                `;
+
+                month.transactions.forEach(txn => {
+                    const isCleared = appData.cleared.some(c => c.transaction_key === txn.key);
+                    const isBill = txn.key.includes('-bill-');
+                    
+                    const amountStr = txn.amount !== 0 
+                        ? `<span style="color: ${txn.amount > 0 ? '#4caf50' : '#dc3545'}; font-weight: 600; min-width: 100px; display: inline-block; text-align: right; ${isBill ? 'cursor: pointer; text-decoration: underline dotted;' : ''}" 
+                             ${isBill ? `onclick="event.stopPropagation(); editBillAmount('${txn.key}', ${Math.abs(txn.amount)}, '${txn.description}');"` : ''} 
+                             title="${isBill ? 'Click to override amount for this month' : ''}">
+                             ${txn.amount > 0 ? '+' : ''}$${Math.abs(txn.amount).toFixed(2)}
+                           </span>`
+                        : '<span style="min-width: 100px; display: inline-block;"></span>';
+                    
+                    html += `
+                        <div class="balance-row ${isCleared ? 'cleared' : ''}" onclick="toggleCleared('${txn.key}')" style="cursor: pointer;">
+                            <span style="display: flex; gap: 10px; align-items: center;">
+                                <span style="color: #999; font-size: 12px; min-width: 50px;">${txn.dateStr}</span>
+                                <span>${txn.description}</span>
+                            </span>
+                            <span style="display: flex; gap: 15px; align-items: center; justify-content: flex-end;">
+                                ${amountStr}
+                                <span class="balance-amount ${txn.balance < 0 ? 'negative' : 'positive'}" style="min-width: 120px; text-align: right; font-weight: 700;">
+                                    $${txn.balance.toFixed(2)}
+                                </span>
+                            </span>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                return html;
+            }).join('');
+        }
+
+        function calculateBillsAccountMonth(date, settings, startingBalance) {
+            const transactions = [];
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Starting balance from previous month or initial
+            let balance = startingBalance;
+
+            transactions.push({
+                key: `${year}-${month}-start`,
+                date: 1,
+                dateStr: '',
+                description: 'Starting Balance',
+                amount: 0,
+                balance
+            });
+
+            // Collect all transactions with dates
+            const allTransactions = [];
+
+            // Add paycheck deposits
+            [settings.payroll_day_1, settings.payroll_day_2].forEach((day, idx) => {
+                if (day <= daysInMonth) {
+                    allTransactions.push({
+                        date: day,
+                        type: 'deposit',
+                        key: `${year}-${month}-deposit-${idx}`,
+                        description: '💰 Paycheck Deposit',
+                        amount: settings.bills_account_deposit
+                    });
+                }
+            });
+
+            // Add bills
+            appData.bills.forEach(bill => {
+                if (shouldBillOccurInMonth(bill, year, month) && bill.due_day <= daysInMonth) {
+                    const override = appData.overrides.find(o => 
+                        o.bill_id === bill.id && o.year === year && o.month === month
+                    );
+                    const amount = override ? override.amount : bill.base_amount;
+                    
+                    allTransactions.push({
+                        date: bill.due_day,
+                        type: 'bill',
+                        key: `${year}-${month}-bill-${bill.id}`,
+                        description: `💳 ${bill.name}`,
+                        amount: -amount
+                    });
+                }
+            });
+
+            // Sort by date, then by type (deposits before bills on same day)
+            allTransactions.sort((a, b) => {
+                if (a.date !== b.date) return a.date - b.date;
+                return a.type === 'deposit' ? -1 : 1;
+            });
+
+            // Apply transactions
+            allTransactions.forEach(txn => {
+                balance += txn.amount;
+                transactions.push({
+                    ...txn,
+                    dateStr: `${month + 1}/${txn.date}`,
+                    balance
+                });
+            });
+
+            return { transactions };
+        }
+
+        function shouldBillOccurInMonth(bill, year, month) {
+            const months = getFrequencyMonths(bill.frequency);
+            const monthsSinceStart = (year - 2024) * 12 + month;
+            return monthsSinceStart % months === 0;
+        }
+
+        function getFrequencyMonths(frequency) {
+            const map = { monthly: 1, quarterly: 3, 'semi-annual': 6, annual: 12 };
+            return map[frequency] || 1;
+        }
+
+        function getOccurrencesPerYear(frequency) {
+            const map = { monthly: 12, quarterly: 4, 'semi-annual': 2, annual: 1 };
+            return map[frequency] || 12;
+        }
+
+        async function toggleCleared(key) {
+            try {
+                await fetch('/api/cleared/toggle', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transaction_key: key })
+                });
+                await loadAppData();
+            } catch (error) {
+                console.error('Toggle cleared error:', error);
+            }
+        }
+
+        async function editBillAmount(key, currentAmount, description) {
+            // Parse key: year-month-bill-billId
+            const parts = key.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const billId = parseInt(parts[3]);
+            
+            const newAmount = prompt(
+                `Override amount for ${description}?\n\n` +
+                `Current amount: $${currentAmount.toFixed(2)}\n` +
+                `Month: ${new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\n\n` +
+                `Enter new amount (or leave blank to remove override):`,
+                currentAmount.toFixed(2)
+            );
+            
+            if (newAmount === null) return; // Cancelled
+            
+            try {
+                if (newAmount === '' || newAmount === currentAmount.toFixed(2)) {
+                    // Remove override
+                    await fetch(`/api/overrides/${billId}/${year}/${month}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                } else {
+                    // Set override
+                    await fetch('/api/overrides', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            bill_id: billId,
+                            year,
+                            month,
+                            amount: parseFloat(newAmount)
+                        })
+                    });
+                }
+                await loadAppData();
+            } catch (error) {
+                console.error('Edit bill amount error:', error);
+                alert('Failed to update bill amount');
+            }
+        }
+
+        // ========== BILLS TAB ========== 
+        function renderBillsTab() {
+            const tbody = document.getElementById('billsTableBody');
+            if (appData.bills.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: #999;">No bills yet. Click "Add Bill" to get started!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appData.bills.map(bill => `
+                <tr>
+                    <td>${bill.name}</td>
+                    <td>$${bill.base_amount.toFixed(2)}</td>
+                    <td>${bill.due_day}</td>
+                    <td>${bill.frequency}</td>
+                    <td>${bill.notes || '-'}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editBill(${bill.id})">✏️ Edit</button>
+                        <button class="action-btn delete-btn" onclick="deleteBill(${bill.id})">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddBillModal() {
+            document.getElementById('billModalTitle').textContent = 'Add Bill';
+            document.getElementById('billForm').reset();
+            document.getElementById('billId').value = '';
+            document.getElementById('billModal').classList.add('active');
+        }
+
+        function editBill(id) {
+            const bill = appData.bills.find(b => b.id === id);
+            if (!bill) return;
+
+            document.getElementById('billModalTitle').textContent = 'Edit Bill';
+            document.getElementById('billId').value = bill.id;
+            document.getElementById('billName').value = bill.name;
+            document.getElementById('billAmount').value = bill.base_amount;
+            document.getElementById('billDueDay').value = bill.due_day;
+            document.getElementById('billFrequency').value = bill.frequency;
+            document.getElementById('billNotes').value = bill.notes || '';
+            document.getElementById('billModal').classList.add('active');
+        }
+
+        async function saveBill(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('billId').value;
+            const data = {
+                name: document.getElementById('billName').value,
+                base_amount: parseFloat(document.getElementById('billAmount').value),
+                due_day: parseInt(document.getElementById('billDueDay').value),
+                frequency: document.getElementById('billFrequency').value,
+                notes: document.getElementById('billNotes').value
+            };
+
+            try {
+                const url = id ? `/api/bills/${id}` : '/api/bills';
+                const method = id ? 'PUT' : 'POST';
+
+                await fetch(url, {
+                    method,
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                closeBillModal();
+                await loadAppData();
+            } catch (error) {
+                console.error('Save bill error:', error);
+                alert('Failed to save bill');
+            }
+        }
+
+        async function deleteBill(id) {
+            if (!confirm('Are you sure you want to delete this bill?')) return;
+
+            try {
+                await fetch(`/api/bills/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                await loadAppData();
+            } catch (error) {
+                console.error('Delete bill error:', error);
+                alert('Failed to delete bill');
+            }
+        }
+
+        function closeBillModal() {
+            document.getElementById('billModal').classList.remove('active');
+        }
+
+        // ========== SETTINGS TAB ========== 
+        function renderSettingsTab() {
+            const s = appData.settings;
+            if (!s) return;
+
+            document.getElementById('settingsContent').innerHTML = `
+                <div class="settings-grid">
+                    <div class="settings-section">
+                        <h3>Income</h3>
+                        <div class="form-group">
+                            <label>Income Per Paycheck ($)</label>
+                            <input type="number" id="settingIncome" value="${s.income_per_paycheck}" step="0.01">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Payroll Day 1</label>
+                                <input type="number" id="settingPayday1" value="${s.payroll_day_1}" min="1" max="31">
+                            </div>
+                            <div class="form-group">
+                                <label>Payroll Day 2</label>
+                                <input type="number" id="settingPayday2" value="${s.payroll_day_2}" min="1" max="31">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Bills Account</h3>
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" id="settingBillsName" value="${s.bills_account_name}">
+                        </div>
+                        <div class="form-group">
+                            <label>Deposit Per Paycheck ($)</label>
+                            <input type="number" id="settingBillsDeposit" value="${s.bills_account_deposit}" step="0.01">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Personal Account</h3>
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" id="settingPersonalName" value="${s.personal_account_name}">
+                        </div>
+                        <div class="form-group">
+                            <label>Deposit Per Paycheck ($)</label>
+                            <input type="number" id="settingPersonalDeposit" value="${s.personal_account_deposit}" step="0.01">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Savings Account 1</h3>
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" id="settingSavings1Name" value="${s.savings_account_1_name}">
+                        </div>
+                        <div class="form-group">
+                            <label>Deposit Per Paycheck ($)</label>
+                            <input type="number" id="settingSavings1Deposit" value="${s.savings_account_1_deposit}" step="0.01">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Savings Account 2</h3>
+                        <div class="form-group">
+                            <label>Account Name</label>
+                            <input type="text" id="settingSavings2Name" value="${s.savings_account_2_name}">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Starting Balance</h3>
+                        <div class="form-group">
+                            <label>Balance ($)</label>
+                            <input type="number" id="settingStartingBalance" value="${s.starting_balance}" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveSettings() {
+            const data = {
+                income_per_paycheck: parseFloat(document.getElementById('settingIncome').value),
+                payroll_day_1: parseInt(document.getElementById('settingPayday1').value),
+                payroll_day_2: parseInt(document.getElementById('settingPayday2').value),
+                bills_account_name: document.getElementById('settingBillsName').value,
+                bills_account_deposit: parseFloat(document.getElementById('settingBillsDeposit').value),
+                personal_account_name: document.getElementById('settingPersonalName').value,
+                personal_account_deposit: parseFloat(document.getElementById('settingPersonalDeposit').value),
+                savings_account_1_name: document.getElementById('settingSavings1Name').value,
+                savings_account_1_deposit: parseFloat(document.getElementById('settingSavings1Deposit').value),
+                savings_account_2_name: document.getElementById('settingSavings2Name').value,
+                starting_balance: parseFloat(document.getElementById('settingStartingBalance').value)
+            };
+
+            try {
+                await fetch('/api/settings', {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                alert('Settings saved successfully!');
+                await loadAppData();
+            } catch (error) {
+                console.error('Save settings error:', error);
+                alert('Failed to save settings');
+            }
+        }
+
+        async function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+
+            if (!current || !newPass) {
+                alert('Please fill in both fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: current, newPassword: newPass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Password changed successfully!');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                } else {
+                    alert(data.error || 'Failed to change password');
+                }
+            } catch (error) {
+                console.error('Change password error:', error);
+                alert('Network error');
+            }
+        }
+
+        async function exportData() {
+            try {
+                const data = await fetch('/api/export', {
+                    credentials: 'include'
+                }).then(r => r.json());
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `budget-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export data');
+            }
+        }
+
+        // ========== ADMIN PANEL ========== 
+        async function loadAdminPanel() {
+            try {
+                const [settings, users, stats] = await Promise.all([
+                    fetch('/api/admin/settings', { credentials: 'include' }).then(r => r.json()),
+                    fetch('/api/admin/users', { credentials: 'include' }).then(r => r.json()),
+                    fetch('/api/admin/stats', { credentials: 'include' }).then(r => r.json())
+                ]);
+
+                // Set registration toggle
+                document.getElementById('allowRegistrationToggle').checked = settings.allow_registration === 1;
+
+                // Render users table
+                renderUsersTable(users);
+
+                // Render stats
+                renderAdminStats(stats);
+            } catch (error) {
+                console.error('Load admin panel error:', error);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const container = document.getElementById('userTableContainer');
+            
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.username}</td>
+                                <td>${user.is_admin ? '<span class="admin-tag">Admin</span>' : 'User'}</td>
+                                <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <div class="user-actions">
+                                        <button class="user-action-btn toggle-admin" onclick="toggleUserAdmin(${user.id}, ${user.is_admin})">
+                                            ${user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                        </button>
+                                        <button class="user-action-btn delete" onclick="deleteUser(${user.id})" 
+                                            ${user.id === appData.userId ? 'disabled' : ''}>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderAdminStats(stats) {
+            document.getElementById('adminStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalUsers}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalAdmins}</div>
+                    <div class="stat-label">Admins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalBills}</div>
+                    <div class="stat-label">Total Bills</div>
+                </div>
+            `;
+        }
+
+        async function toggleRegistration() {
+            try {
+                const allow_registration = document.getElementById('allowRegistrationToggle').checked;
+                
+                await fetch('/api/admin/settings', {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ allow_registration })
+                });
+
+                alert(`Registration ${allow_registration ? 'enabled' : 'disabled'} successfully!`);
+            } catch (error) {
+                console.error('Toggle registration error:', error);
+                alert('Failed to update registration setting');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user? All their data will be permanently deleted.')) {
+                return;
+            }
+
+            try {
+                await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                alert('User deleted successfully');
+                loadAdminPanel();
+            } catch (error) {
+                console.error('Delete user error:', error);
+                alert('Failed to delete user');
+            }
+        }
+
+        async function toggleUserAdmin(userId, isCurrentlyAdmin) {
+            const action = isCurrentlyAdmin ? 'remove admin status from' : 'make admin';
+            if (!confirm(`Are you sure you want to ${action} this user?`)) {
+                return;
+            }
+
+            try {
+                await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                alert('User role updated successfully');
+                loadAdminPanel();
+            } catch (error) {
+                console.error('Toggle admin error:', error);
+                alert('Failed to update user role');
+            }
+        }
+
+        // ========== UTILITY FUNCTIONS ========== 
+        function showError(message, elementId = 'error') {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = message;
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 5000);
+            }
+        }
+
+        function showSuccess(message, elementId = 'success') {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = message;
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 5000);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

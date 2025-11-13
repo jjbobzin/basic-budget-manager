@@ -1,0 +1,31 @@
+version: '3.8'
+
+# LOCAL BUILD CONFIGURATION
+# This builds the Docker image from source code (Dockerfile) in the current directory
+# Perfect for: development, testing, or when deploying directly from Git
+#
+# Alternative: docker-compose.hub.yml - pulls pre-built image from Docker Hub
+# See DOCKER-HUB-GUIDE.md for comparison and setup instructions
+
+services:
+  budget-manager:
+    container_name: budget-manager
+    build: .                      # Builds from Dockerfile in current directory (not from Docker Hub)
+    image: budget-manager:latest  # Tags the built image with this name
+    ports:
+      - "54321:54321"             # Host:Container port mapping (change left number for different host port)
+    volumes:
+      - ./data:/app/data          # Persistent database storage (survives container restarts)
+    environment:
+      - PORT=54321                # Internal application port
+      - NODE_ENV=production       # Node environment mode
+    restart: unless-stopped       # Automatically restart container unless manually stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:54321/api/settings', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  data:
