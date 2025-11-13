@@ -1201,7 +1201,7 @@
                     
                     <!-- Version Display -->
                     <div style="text-align: center; padding: 20px; color: #999; font-size: 12px; border-top: 1px solid #e0e0e0; margin-top: 20px;">
-                        Budget Manager v1.0.1 - Multi-User Edition
+                        Budget Manager v1.0.2 - Multi-User Edition
                     </div>
                 </div>
             </div>
@@ -1799,8 +1799,21 @@
             const s = appData.settings;
             if (!s) return;
 
-            const totalIncome = s.income_per_paycheck * 2;
-            const totalDeposits = s.bills_account_deposit + s.personal_account_deposit + s.savings_account_1_deposit;
+            const incomePerPaycheck = s.income_per_paycheck;
+            const monthlyIncome = incomePerPaycheck * 2;
+            
+            // Fixed deposits per paycheck
+            const billsDeposit = s.bills_account_deposit;
+            const personalDeposit = s.personal_account_deposit;
+            const savings1Deposit = s.savings_account_1_deposit;
+            
+            // Calculate remainder (what goes to last account)
+            const fixedDeposits = billsDeposit + personalDeposit + savings1Deposit;
+            const remainder = incomePerPaycheck - fixedDeposits;
+            const monthlyRemainder = remainder * 2;
+            
+            // Check if over budget
+            const isOverBudget = remainder < 0;
             
             // Calculate average monthly bills correctly
             const totalBills = appData.bills.reduce((sum, bill) => {
@@ -1808,62 +1821,90 @@
                 return sum + (bill.base_amount * occurrencesPerYear / 12);
             }, 0);
 
-            const leftover = totalIncome - totalDeposits;
-            const billsDeposit = s.bills_account_deposit * 2;
-            const coverage = totalBills > 0 ? (billsDeposit / totalBills * 100) : 100;
+            const billsDepositMonthly = billsDeposit * 2;
+            const coverage = totalBills > 0 ? (billsDepositMonthly / totalBills * 100) : 100;
 
             document.getElementById('budgetContent').innerHTML = `
                 <div class="settings-grid">
                     <div class="settings-section">
                         <h3>💰 Monthly Income</h3>
-                        <p style="font-size: 24px; font-weight: 600; color: #4caf50;">$${totalIncome.toFixed(2)}</p>
-                        <p style="color: #666; font-size: 14px;">$${s.income_per_paycheck.toFixed(2)} × 2 paychecks</p>
-                    </div>
-                    <div class="settings-section">
-                        <h3>📊 Total Deposits</h3>
-                        <p style="font-size: 24px; font-weight: 600; color: #667eea;">$${(totalDeposits * 2).toFixed(2)}</p>
-                        <p style="color: #666; font-size: 14px;">Per month (2 paychecks)</p>
+                        <p style="font-size: 28px; font-weight: 600; color: #4caf50; margin-bottom: 5px;">$${monthlyIncome.toFixed(2)}</p>
+                        <p style="color: #666; font-size: 14px;">$${incomePerPaycheck.toFixed(2)} × 2 paychecks</p>
                     </div>
                     <div class="settings-section">
                         <h3>💸 Monthly Bills</h3>
-                        <p style="font-size: 24px; font-weight: 600; color: #dc3545;">$${totalBills.toFixed(2)}</p>
+                        <p style="font-size: 28px; font-weight: 600; color: #dc3545; margin-bottom: 5px;">$${totalBills.toFixed(2)}</p>
                         <p style="color: #666; font-size: 14px;">Average per month</p>
                     </div>
                     <div class="settings-section">
-                        <h3>✨ Leftover</h3>
-                        <p style="font-size: 24px; font-weight: 600; color: ${leftover >= 0 ? '#4caf50' : '#dc3545'};">$${leftover.toFixed(2)}</p>
-                        <p style="color: #666; font-size: 14px;">After deposits (per paycheck)</p>
+                        <h3>📈 Bill Coverage</h3>
+                        <p style="font-size: 28px; font-weight: 600; color: ${coverage >= 100 ? '#4caf50' : '#ff9800'}; margin-bottom: 5px;">${coverage.toFixed(1)}%</p>
+                        <p style="color: #666; font-size: 14px;">Bills account covers bills</p>
                     </div>
                 </div>
+
+                ${isOverBudget ? `
+                <div class="error-message" style="margin: 20px 0;">
+                    ⚠️ <strong>Warning:</strong> Your fixed deposits ($${fixedDeposits.toFixed(2)}) exceed your income per paycheck ($${incomePerPaycheck.toFixed(2)}) by <strong>$${Math.abs(remainder).toFixed(2)}</strong>.
+                    <br>Your remainder account will be <strong>negative</strong> each paycheck. Consider reducing your fixed deposits or updating your income in Settings.
+                </div>
+                ` : ''}
+
                 <div class="settings-section" style="margin-top: 20px;">
-                    <h3>📈 Bill Coverage</h3>
-                    <p style="font-size: 18px; color: ${coverage >= 100 ? '#4caf50' : '#dc3545'};">
-                        Your bills account deposit covers <strong>${coverage.toFixed(1)}%</strong> of your monthly bills
+                    <h3>📊 Account Deposits (per paycheck)</h3>
+                    <table style="width: 100%; margin-top: 15px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e0e0e0;">
+                                <th style="text-align: left; padding: 12px;">Account</th>
+                                <th style="text-align: right; padding: 12px;">Per Paycheck</th>
+                                <th style="text-align: right; padding: 12px;">Per Month</th>
+                                <th style="text-align: center; padding: 12px;">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">${s.bills_account_name}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; font-weight: 600;">$${billsDeposit.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; color: #666;">$${(billsDeposit * 2).toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Fixed</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">${s.personal_account_name}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; font-weight: 600;">$${personalDeposit.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; color: #666;">$${(personalDeposit * 2).toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Fixed</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #f0f0f0;">${s.savings_account_1_name}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; font-weight: 600;">$${savings1Deposit.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #f0f0f0; color: #666;">$${(savings1Deposit * 2).toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0;"><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Fixed</span></td>
+                            </tr>
+                            <tr style="background: #f9f9f9;">
+                                <td style="padding: 12px; border-bottom: 2px solid #e0e0e0;">${s.savings_account_2_name}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 2px solid #e0e0e0; font-weight: 600; color: ${isOverBudget ? '#dc3545' : '#4caf50'};">$${remainder.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: right; border-bottom: 2px solid #e0e0e0; color: #666;">$${monthlyRemainder.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: center; border-bottom: 2px solid #e0e0e0;"><span style="background: #fff3cd; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Remainder</span></td>
+                            </tr>
+                            <tr style="font-weight: 700; background: #f5f5f5;">
+                                <td style="padding: 12px;">Total</td>
+                                <td style="padding: 12px; text-align: right; color: ${isOverBudget ? '#dc3545' : '#4caf50'};">$${incomePerPaycheck.toFixed(2)}</td>
+                                <td style="padding: 12px; text-align: right; color: ${isOverBudget ? '#dc3545' : '#4caf50'};">$${monthlyIncome.toFixed(2)}</td>
+                                <td style="padding: 12px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="color: #666; font-size: 13px; margin-top: 10px; font-style: italic;">
+                        💡 The <strong>${s.savings_account_2_name}</strong> account gets whatever remains after fixed deposits.
                     </p>
-                    ${coverage < 100 ? `<p style="color: #dc3545;">⚠️ Warning: You may need to increase your bills account deposit</p>` : ''}
                 </div>
-                <div class="settings-grid" style="margin-top: 20px;">
-                    <div class="settings-section">
-                        <h3>${s.bills_account_name}</h3>
-                        <p style="font-size: 20px; font-weight: 600;">$${(s.bills_account_deposit * 2).toFixed(2)}/mo</p>
-                        <p style="color: #666; font-size: 14px;">$${s.bills_account_deposit.toFixed(2)} per paycheck</p>
-                    </div>
-                    <div class="settings-section">
-                        <h3>${s.personal_account_name}</h3>
-                        <p style="font-size: 20px; font-weight: 600;">$${(s.personal_account_deposit * 2).toFixed(2)}/mo</p>
-                        <p style="color: #666; font-size: 14px;">$${s.personal_account_deposit.toFixed(2)} per paycheck</p>
-                    </div>
-                    <div class="settings-section">
-                        <h3>${s.savings_account_1_name}</h3>
-                        <p style="font-size: 20px; font-weight: 600;">$${(s.savings_account_1_deposit * 2).toFixed(2)}/mo</p>
-                        <p style="color: #666; font-size: 14px;">$${s.savings_account_1_deposit.toFixed(2)} per paycheck</p>
-                    </div>
-                    <div class="settings-section">
-                        <h3>${s.savings_account_2_name}</h3>
-                        <p style="font-size: 20px; font-weight: 600;">$${(leftover * 2).toFixed(2)}/mo</p>
-                        <p style="color: #666; font-size: 14px;">$${leftover.toFixed(2)} remainder per paycheck</p>
-                    </div>
+
+                ${coverage < 100 ? `
+                <div class="info-message" style="margin-top: 20px;">
+                    ⚠️ <strong>Note:</strong> Your bills account deposit only covers ${coverage.toFixed(1)}% of your average monthly bills. 
+                    You may want to increase your <strong>${s.bills_account_name}</strong> deposit from $${billsDeposit.toFixed(2)} to at least $${(totalBills / 2).toFixed(2)} per paycheck.
                 </div>
+                ` : ''}
             `;
         }
 
